@@ -1,7 +1,6 @@
 // controllers/market.controller.js
 const db = require("../models/index");
 const asyncHandler = require("../middleware/asyncHandler");
-
 const { ValidationError, NotFoundError } = require("../utils/error.utils");
 
 const Stock = db.stock;
@@ -9,9 +8,6 @@ const Stock = db.stock;
 /**
  * Search for stocks by symbol or company name
  * Endpoint: GET /api/stocks/search?q=AAPL
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Express next middleware
  */
 exports.searchStocks = asyncHandler(async (req, res, next) => {
   const { q } = req.query;
@@ -20,8 +16,6 @@ exports.searchStocks = asyncHandler(async (req, res, next) => {
     throw new ValidationError("Search query is required");
   }
 
-  // Perform case-insensitive search on symbol OR name
-  // Using regex for partial matching (e.g., "APP" matches "APPLE")
   const stocks = await Stock.find({
     $or: [
       { symbol: { $regex: q, $options: "i" } },
@@ -29,11 +23,10 @@ exports.searchStocks = asyncHandler(async (req, res, next) => {
     ],
     isActive: true,
   })
-    .select("symbol name currentPrice previousClosePrice sector") // Select only necessary fields
-    .limit(10) // Limit results for performance
-    .lean(); // Convert to plain JS objects for speed
+    .select("symbol name currentPrice previousClosePrice sector")
+    .limit(10)
+    .lean();
 
-  // Calculate percentage change for the UI
   const results = stocks.map((stock) => {
     const change = stock.currentPrice - stock.previousClosePrice;
     const changePercent = (change / stock.previousClosePrice) * 100;
@@ -53,22 +46,47 @@ exports.searchStocks = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * Get full details for a specific stock
+ * Get full details for a specific stock INCLUDING 1D HISTORY
  * Endpoint: GET /api/stocks/:symbol
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Express next middleware
  */
 exports.getStockDetails = asyncHandler(async (req, res, next) => {
   const { symbol } = req.params;
+  const upperSymbol = symbol.toUpperCase();
 
-  const stock = await Stock.findOne({
-    symbol: symbol.toUpperCase(),
-  });
+  // Define 24-hour window
+  const oneDayAgo = new Date();
+  oneDayAgo.setHours(oneDayAgo.getHours() - 24);
 
-  if (!stock) {
-    throw NotFoundError(`Stock with symbol ${symbol} not found`);
+  // Use Aggregation to fetch details + filtered history in one go
+  const pipeline = [
+    { $match: { symbol: upperSymbol } },
+    {
+      $project: {
+        symbol: 1,
+        name: 1,
+        sector: 1,
+        currentPrice: 1,
+        previousClosePrice: 1,
+        lastUpdated: 1,
+        // Filter history array to only show last 24h
+        history: {
+          $filter: {
+            input: "$history",
+            as: "point",
+            cond: { $gte: ["$$point.timestamp", oneDayAgo] },
+          },
+        },
+      },
+    },
+  ];
+
+  const results = await Stock.aggregate(pipeline);
+
+  if (!results || results.length === 0) {
+    throw new NotFoundError(`Stock with symbol ${symbol} not found`);
   }
+
+  const stock = results[0];
 
   // Calculate real-time stats
   const change = stock.currentPrice - stock.previousClosePrice;
@@ -86,6 +104,8 @@ exports.getStockDetails = asyncHandler(async (req, res, next) => {
       change: Number(change.toFixed(2)),
       changePercent: Number(changePercent.toFixed(2)),
       lastUpdated: stock.lastUpdated,
+      // Include the 1D history here
+      history: stock.history, 
     },
   });
 });
@@ -93,7 +113,6 @@ exports.getStockDetails = asyncHandler(async (req, res, next) => {
 /**
  * Get historical price data for charts
  * Endpoint: GET /api/stocks/:symbol/history?range=1D
- * Ranges: 1D (Day), 1W (Week), 1M (Month), 1Y (Year), ALL
  */
 exports.getStockHistory = asyncHandler(async (req, res, next) => {
   const { symbol } = req.params;
@@ -101,59 +120,55 @@ exports.getStockHistory = asyncHandler(async (req, res, next) => {
 
   // 1. Determine the start date filter based on range
   let startDate = new Date();
-  
+
   switch (range) {
-    case '1D':
-      startDate.setHours(startDate.getHours() - 24); // Last 24 hours
+    case "1D":
+      startDate.setHours(startDate.getHours() - 24);
       break;
-    case '1W':
-      startDate.setDate(startDate.getDate() - 7); // Last 7 days
+    case "1W":
+      startDate.setDate(startDate.getDate() - 7);
       break;
-    case '1M':
-      startDate.setMonth(startDate.getMonth() - 1); // Last 30 days
+    case "1M":
+      startDate.setMonth(startDate.getMonth() - 1);
       break;
-    case '1Y':
-      startDate.setFullYear(startDate.getFullYear() - 1); // Last 1 year
+    case "1Y":
+      startDate.setFullYear(startDate.getFullYear() - 1);
       break;
-    case 'ALL':
-      startDate = new Date(0); // Beginning of time (1970)
+    case "ALL":
+      startDate = new Date(0);
       break;
     default:
-      // Default to 1 Day if range is missing or invalid
       startDate.setHours(startDate.getHours() - 24);
   }
 
   // 2. Fetch stock with filtered history
-  // Use aggregation to efficiently filter the embedded array
   const stock = await Stock.aggregate([
     { $match: { symbol: symbol.toUpperCase() } },
     {
       $project: {
         symbol: 1,
-        // Filter the history array to only include points after startDate
         history: {
           $filter: {
             input: "$history",
             as: "point",
-            cond: { $gte: ["$$point.timestamp", startDate] }
-          }
-        }
-      }
-    }
+            cond: { $gte: ["$$point.timestamp", startDate] },
+          },
+        },
+      },
+    },
   ]);
 
   if (!stock || stock.length === 0) {
     throw new NotFoundError(`Stock with symbol ${symbol} not found`);
   }
 
-  // Aggregate returns an array, pick the first item
   const result = stock[0];
 
   res.status(200).json({
     success: true,
     symbol: result.symbol,
-    range: range || '1D',
+    range: range || "1D",
     count: result.history.length,
-    data: result.history // Returns array of { price, timestamp }
+    data: result.history,
   });
 });

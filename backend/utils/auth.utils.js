@@ -57,6 +57,10 @@ const sanitizeUser = (user) => {
     email: user.email,
     name: user.name,
     avatar: user.avatar,
+    totalPoints: user.totalPoints,
+    level: user.level,
+    currentXp: user.currentXp,
+    portfolio: user.portfolio, 
     activity: {
       lastLogin: user.activity?.lastLogin,
     },

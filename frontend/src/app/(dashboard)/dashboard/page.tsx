@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   TrendingUp,
   TrendingDown,
@@ -25,6 +25,8 @@ import {
   PieChartComponent,
   GaugeChart,
 } from "@/components/charts"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { fetchPortfolio } from "@/store/slices/portfolio.slice"
 
 // Mock data
 const portfolioHistory = [
@@ -73,8 +75,15 @@ const watchlist = [
 ]
 
 export default function DashboardPage() {
+  const dispatch = useAppDispatch();
   const [selectedPeriod, setSelectedPeriod] = useState("1W")
-
+  const { user } = useAppSelector((state) => state.auth);
+  const portfolio = useAppSelector((state) => state.portfolio);
+  console.log("The portfolio is:", portfolio);
+  console.log("the user is", user);
+  useEffect(() => {
+    dispatch(fetchPortfolio());
+  },[])
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -115,14 +124,14 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Portfolio Value"
-          value="$12,000.00"
+          value={portfolio.cashBalance}
           change="+20.0%"
           changeValue="+$2,000"
           isPositive={true}
           icon={<DollarSign className="h-4 w-4" />}
           description="All time high"
         />
-        <StatsCard
+        {/* <StatsCard
           title="Today's P&L"
           value="$270.00"
           change="+2.3%"
@@ -130,8 +139,8 @@ export default function DashboardPage() {
           isPositive={true}
           icon={<Activity className="h-4 w-4" />}
           description="Real-time"
-        />
-        <StatsCard
+        /> */}
+        {/* <StatsCard
           title="Total Trades"
           value="28"
           change="+3 today"
@@ -139,10 +148,10 @@ export default function DashboardPage() {
           isPositive={true}
           icon={<Target className="h-4 w-4" />}
           description="68% win rate"
-        />
+        /> */}
         <StatsCard
           title="XP Points"
-          value="2,450"
+          value={user?.currentXp || 0}
           change="+150 today"
           changeValue=""
           isPositive={true}
@@ -485,7 +494,7 @@ function StatsCard({
   description,
 }: {
   title: string
-  value: string
+  value: string | number
   change: string
   changeValue: string
   isPositive: boolean

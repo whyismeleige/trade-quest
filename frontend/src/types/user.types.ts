@@ -3,8 +3,14 @@ export interface User {
   email: string;
   name: string;
   avatar: string;
+  // New Gamification Fields
+  totalPoints: number;
+  level: number;
+  currentXp: number;
+  // Link to Portfolio (ID string or null)
+  portfolio?: string; 
   activity: {
-    lastLogin: string;
+    lastLogin: string; // ISO Date string
   };
   createdAt: string;
   updatedAt: string;

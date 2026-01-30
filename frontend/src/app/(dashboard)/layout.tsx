@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import ProtectedRoute from "@/components/routes/ProtectedRoute"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { logoutUser } from "@/store/slices/auth.slice"
 
 interface NavItem {
   title: string
@@ -61,14 +63,8 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: "Trading",
-    href: "/stock",
+    href: "/stocks",
     icon: <TrendingUp className="h-5 w-5" />,
-  },
-  {
-    title: "Marketplace",
-    href: "/marketplace",
-    icon: <Store className="h-5 w-5" />,
-    badge: "New",
   },
   {
     title: "Portfolio",
@@ -137,6 +133,12 @@ export default function DashboardLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+
+  const handleLogout = () => {
+    dispatch(logoutUser())
+  }
 
   return (
     <ProtectedRoute>
@@ -221,11 +223,11 @@ export default function DashboardLayout({
             {!collapsed ? (
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/avatars/user.png" alt="User" />
+                  <AvatarImage src={user?.avatar} alt="User" />
                   <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">Piyush</p>
+                  <p className="text-sm font-semibold truncate">{user?.name || "User"}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Zap className="h-3 w-3 text-yellow-500" />
                     Level 12 • 2,450 XP
@@ -243,7 +245,7 @@ export default function DashboardLayout({
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/avatars/user.png" alt="User" />
+                  <AvatarImage src={user?.avatar} alt="User" />
                   <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                 </Avatar>
                 <Button
@@ -322,7 +324,7 @@ export default function DashboardLayout({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src="/avatars/user.png" alt="User" />
+                      <AvatarImage src={user?.avatar} alt="User" />
                       <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -330,8 +332,8 @@ export default function DashboardLayout({
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">Piyush</p>
-                      <p className="text-xs text-muted-foreground">piyush@example.com</p>
+                      <p className="text-sm font-medium">{user?.name || "User"}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email || "user@email.com"}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -344,7 +346,7 @@ export default function DashboardLayout({
                     Help & Support
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>

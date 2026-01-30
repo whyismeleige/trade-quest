@@ -144,14 +144,15 @@ function AuthPage() {
     try {
       setLoading(true);
 
-      await dispatch(
+      const result = await dispatch(
         view === "signup"
           ? registerUser({ email, password, name })
           : loginUser({ email, password })
       )
-      router.push("/");
-    } catch (error) {
       
+      router.push("/dashboard");
+    } catch (error) {
+      console.log("The error is ", error);
     } finally {
       setLoading(false);
     }

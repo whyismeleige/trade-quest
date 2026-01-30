@@ -47,9 +47,8 @@ const TradeSchema = new mongoose.Schema(
 TradeSchema.index({ userId: 1, executedAt: -1 });
 TradeSchema.index({ symbol: 1 });
 
-TradeSchema.pre("save", function (next) {
+TradeSchema.pre("save", function () {
   this.totalCost = this.price * this.quantity;
-  next();
 });
 
 module.exports = mongoose.model("Trade", TradeSchema);
