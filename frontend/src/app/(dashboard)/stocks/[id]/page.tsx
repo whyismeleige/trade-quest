@@ -161,7 +161,7 @@ export default function StockPage() {
   // Global Loading State (for page)
   if (stockLoading && !selectedStock) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
+      <div className="h-full w-full flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm font-medium text-muted-foreground animate-pulse">
@@ -174,7 +174,7 @@ export default function StockPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex flex-col h-full -m-3 sm:-m-4 md:-m-6">
         
         {/* --- HEADER --- */}
         <header className="border-b bg-card px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm z-10">
@@ -255,12 +255,12 @@ export default function StockPage() {
         </header>
 
         {/* --- MAIN CONTENT --- */}
-        <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
+        <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
           
           {/* LEFT: CHART */}
-          <div className="flex-1 p-3 sm:p-4 md:p-6 overflow-hidden bg-gradient-to-b from-background to-muted/20 min-h-[300px] lg:min-h-0">
+          <div className="flex-1 p-3 sm:p-4 overflow-hidden bg-gradient-to-b from-background to-muted/20 min-h-[250px] sm:min-h-[300px] lg:min-h-0">
             <Card className="h-full border shadow-sm bg-card/50 backdrop-blur-sm flex flex-col">
-              <CardContent className="p-3 sm:p-6 h-full flex flex-col">
+              <CardContent className="p-3 sm:p-4 h-full flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-semibold tracking-tight">Price Performance</h3>
@@ -297,12 +297,12 @@ export default function StockPage() {
           {/* RIGHT: TRADING SIDEBAR */}
           <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l bg-card flex flex-col lg:h-full shadow-xl z-20">
             {/* Header */}
-            <div className="p-4 sm:p-6 xl:p-8 border-b bg-muted/10">
+            <div className="p-3 sm:p-4 border-b bg-muted/10">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">About Asset</span>
-              <h2 className="text-2xl xl:text-3xl font-black mt-2 tracking-tight line-clamp-1" title={selectedStock?.name}>
+              <h2 className="text-xl sm:text-2xl font-black mt-1 tracking-tight line-clamp-1" title={selectedStock?.name}>
                 {selectedStock?.name || stockSymbol}
               </h2>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="rounded-sm font-normal text-xs px-2">
                   {selectedStock?.sector || "Technology"}
                 </Badge>
@@ -312,9 +312,9 @@ export default function StockPage() {
             </div>
 
             {/* Form */}
-            <div className="flex-1 p-4 sm:p-6 xl:p-8 space-y-4 sm:space-y-6 overflow-y-auto">
+            <div className="flex-1 p-3 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto">
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex justify-between items-end">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</Label>
                   <span className={`text-[10px] font-mono ${!canAfford ? "text-red-500" : "text-muted-foreground"}`}>
@@ -329,7 +329,7 @@ export default function StockPage() {
                     value={tradeQty}
                     onChange={(e) => setTradeQty(e.target.value)}
                     disabled={tradeLoading}
-                    className="text-2xl font-bold h-14 pl-4 pr-16 border-2 focus-visible:ring-2 focus-visible:ring-offset-0 transition-all"
+                    className="text-xl sm:text-2xl font-bold h-12 pl-4 pr-16 border-2 focus-visible:ring-2 focus-visible:ring-offset-0 transition-all"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm pointer-events-none group-focus-within:text-primary">
                     QTY
@@ -338,7 +338,7 @@ export default function StockPage() {
               </div>
 
               {/* Cost Breakdown */}
-              <div className="p-5 rounded-xl bg-muted/40 border border-border/50 space-y-3">
+              <div className="p-3 sm:p-4 rounded-xl bg-muted/40 border border-border/50 space-y-2 sm:space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Price per share</span>
                   <span className="font-mono">${currentPrice.toFixed(2)}</span>
@@ -370,10 +370,10 @@ export default function StockPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid gap-3 pt-4">
+              <div className="grid gap-2 sm:gap-3 pt-2 sm:pt-4">
                 <Button 
                   size="lg" 
-                  className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wide shadow-md shadow-emerald-900/10 active:scale-[0.98] transition-all"
+                  className="h-10 sm:h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wide shadow-md shadow-emerald-900/10 active:scale-[0.98] transition-all"
                   disabled={tradeLoading || !canAfford || stockLoading}
                   onClick={() => handleTrade("BUY")}
                 >
@@ -384,7 +384,7 @@ export default function StockPage() {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="h-12 border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:border-red-800 font-bold tracking-wide active:scale-[0.98] transition-all"
+                  className="h-10 sm:h-12 border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:border-red-800 font-bold tracking-wide active:scale-[0.98] transition-all"
                   disabled={tradeLoading || stockLoading}
                   onClick={() => handleTrade("SELL")}
                 >
