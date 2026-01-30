@@ -1,4 +1,5 @@
 "use client";
+import { AnimatedThemeToggler } from "@/components/providers/theme.provider"
 import PublicRoute from "@/components/routes/PublicRoute";
 import { Button } from "@/components/ui/button";
 import {
@@ -177,12 +178,12 @@ function AuthPage() {
               <div className="flex size-10 items-center justify-center rounded-md bg-primary">
                 <Briefcase className="size-6 text-primary-foreground" />
               </div>
-              <span className="sr-only">GigFlow</span>
+              <span className="sr-only">Trade-Quest</span>
             </Link>
-            <h1 className="text-xl font-bold">Welcome to GigFlow</h1>
+            <h1 className="text-xl font-bold">Welcome to Trade-Quest</h1>
             <FieldDescription>
               {view === "login"
-                ? "Log in to find gigs or hire freelancers"
+                ? "Log in to start your Trading Journey"
                 : "Create your free account to get started"}
             </FieldDescription>
           </div>
