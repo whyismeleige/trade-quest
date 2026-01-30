@@ -1,889 +1,550 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   BookOpen,
-  Play,
-  Clock,
-  Star,
-  Trophy,
-  Zap,
-  Lock,
-  CheckCircle2,
-  ChevronRight,
-  Search,
-  Filter,
   TrendingUp,
-  BarChart3,
-  Target,
   Shield,
   Brain,
+  BarChart3,
+  Target,
   Lightbulb,
-  GraduationCap,
-  Award,
-  Flame,
-  Users,
-  PlayCircle,
-  FileText,
-  Video,
-  Headphones,
-  BookMarked,
-  Sparkles,
-  ArrowRight,
-  Timer,
-  CircleDot,
+  AlertTriangle,
+  CheckCircle2,
+  DollarSign,
+  LineChart,
+  PieChart,
+  Trophy,
+  Zap,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 
-// Types
-interface Course {
-  id: string
-  title: string
-  description: string
-  category: string
-  difficulty: "beginner" | "intermediate" | "advanced"
-  duration: string
-  lessons: number
-  completedLessons: number
-  xpReward: number
-  image: string
-  instructor: string
-  rating: number
-  students: number
-  tags: string[]
-  isLocked: boolean
-  isFeatured?: boolean
-}
-
-interface Lesson {
-  id: string
-  title: string
-  duration: string
-  type: "video" | "article" | "quiz" | "exercise"
-  isCompleted: boolean
-  isLocked: boolean
-  xpReward: number
-}
-
-interface LearningPath {
-  id: string
-  title: string
-  description: string
-  courses: number
-  completedCourses: number
-  totalXp: number
-  icon: React.ReactNode
-  color: string
-}
-
-// Sample Data
-const courses: Course[] = [
-  {
-    id: "1",
-    title: "Trading Fundamentals 101",
-    description: "Master the basics of stock trading, market orders, and portfolio management.",
-    category: "Fundamentals",
-    difficulty: "beginner",
-    duration: "2h 30m",
-    lessons: 12,
-    completedLessons: 12,
-    xpReward: 500,
-    image: "/courses/fundamentals.jpg",
-    instructor: "Alex Thompson",
-    rating: 4.9,
-    students: 12453,
-    tags: ["Basics", "Stocks", "Orders"],
-    isLocked: false,
-    isFeatured: true,
-  },
-  {
-    id: "2",
-    title: "Technical Analysis Mastery",
-    description: "Learn to read charts, identify patterns, and use technical indicators effectively.",
-    category: "Technical Analysis",
-    difficulty: "intermediate",
-    duration: "4h 15m",
-    lessons: 18,
-    completedLessons: 8,
-    xpReward: 1000,
-    image: "/courses/technical.jpg",
-    instructor: "Sarah Chen",
-    rating: 4.8,
-    students: 8932,
-    tags: ["Charts", "Patterns", "Indicators"],
-    isLocked: false,
-  },
-  {
-    id: "3",
-    title: "Risk Management Essentials",
-    description: "Protect your portfolio with proven risk management strategies and position sizing.",
-    category: "Risk Management",
-    difficulty: "intermediate",
-    duration: "3h 00m",
-    lessons: 15,
-    completedLessons: 0,
-    xpReward: 750,
-    image: "/courses/risk.jpg",
-    instructor: "Mike Rodriguez",
-    rating: 4.9,
-    students: 7654,
-    tags: ["Risk", "Position Sizing", "Stop Loss"],
-    isLocked: false,
-  },
-  {
-    id: "4",
-    title: "Options Trading Fundamentals",
-    description: "Understand calls, puts, and basic options strategies for income and hedging.",
-    category: "Options",
-    difficulty: "intermediate",
-    duration: "5h 30m",
-    lessons: 24,
-    completedLessons: 0,
-    xpReward: 1500,
-    image: "/courses/options.jpg",
-    instructor: "Emma Wilson",
-    rating: 4.7,
-    students: 5432,
-    tags: ["Options", "Calls", "Puts"],
-    isLocked: false,
-  },
-  {
-    id: "5",
-    title: "Advanced Chart Patterns",
-    description: "Deep dive into complex chart patterns and how to trade them profitably.",
-    category: "Technical Analysis",
-    difficulty: "advanced",
-    duration: "3h 45m",
-    lessons: 16,
-    completedLessons: 0,
-    xpReward: 1200,
-    image: "/courses/patterns.jpg",
-    instructor: "David Park",
-    rating: 4.8,
-    students: 3421,
-    tags: ["Patterns", "Advanced", "Trading"],
-    isLocked: true,
-  },
-  {
-    id: "6",
-    title: "Trading Psychology",
-    description: "Master your emotions and develop the mindset of a successful trader.",
-    category: "Psychology",
-    difficulty: "beginner",
-    duration: "2h 00m",
-    lessons: 10,
-    completedLessons: 5,
-    xpReward: 400,
-    image: "/courses/psychology.jpg",
-    instructor: "Jessica Lee",
-    rating: 4.9,
-    students: 9876,
-    tags: ["Psychology", "Mindset", "Emotions"],
-    isLocked: false,
-  },
-  {
-    id: "7",
-    title: "Swing Trading Strategies",
-    description: "Learn to capture medium-term price movements with swing trading techniques.",
-    category: "Strategies",
-    difficulty: "intermediate",
-    duration: "4h 00m",
-    lessons: 20,
-    completedLessons: 0,
-    xpReward: 1000,
-    image: "/courses/swing.jpg",
-    instructor: "Ryan Kumar",
-    rating: 4.6,
-    students: 4567,
-    tags: ["Swing Trading", "Strategies"],
-    isLocked: false,
-  },
-  {
-    id: "8",
-    title: "Algorithmic Trading Basics",
-    description: "Introduction to automated trading systems and algorithmic strategies.",
-    category: "Advanced",
-    difficulty: "advanced",
-    duration: "6h 00m",
-    lessons: 28,
-    completedLessons: 0,
-    xpReward: 2000,
-    image: "/courses/algo.jpg",
-    instructor: "Alex Thompson",
-    rating: 4.7,
-    students: 2345,
-    tags: ["Algorithms", "Automation", "Systems"],
-    isLocked: true,
-  },
-]
-
-const currentCourse = {
-  id: "2",
-  title: "Technical Analysis Mastery",
-  lessons: [
-    { id: "1", title: "Introduction to Technical Analysis", duration: "12:30", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "2", title: "Understanding Candlestick Charts", duration: "18:45", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "3", title: "Support and Resistance Levels", duration: "15:20", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "4", title: "Trend Lines and Channels", duration: "14:10", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "5", title: "Quiz: Chart Basics", duration: "10 questions", type: "quiz" as const, isCompleted: true, isLocked: false, xpReward: 100 },
-    { id: "6", title: "Moving Averages Explained", duration: "20:00", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "7", title: "RSI and MACD Indicators", duration: "22:15", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "8", title: "Bollinger Bands Strategy", duration: "16:40", type: "video" as const, isCompleted: true, isLocked: false, xpReward: 50 },
-    { id: "9", title: "Practice Exercise: Identify Patterns", duration: "30 min", type: "exercise" as const, isCompleted: false, isLocked: false, xpReward: 150 },
-    { id: "10", title: "Volume Analysis", duration: "18:30", type: "video" as const, isCompleted: false, isLocked: false, xpReward: 50 },
-    { id: "11", title: "Chart Pattern Recognition", duration: "25:00", type: "video" as const, isCompleted: false, isLocked: true, xpReward: 50 },
-    { id: "12", title: "Final Assessment", duration: "20 questions", type: "quiz" as const, isCompleted: false, isLocked: true, xpReward: 200 },
-  ],
-}
-
-const learningPaths: LearningPath[] = [
-  {
-    id: "1",
-    title: "Complete Beginner",
-    description: "Start your trading journey from zero",
-    courses: 5,
-    completedCourses: 2,
-    totalXp: 3000,
-    icon: <GraduationCap className="h-6 w-6" />,
-    color: "bg-green-500",
-  },
-  {
-    id: "2",
-    title: "Technical Trader",
-    description: "Master charts and technical analysis",
-    courses: 6,
-    completedCourses: 1,
-    totalXp: 5000,
-    icon: <BarChart3 className="h-6 w-6" />,
-    color: "bg-blue-500",
-  },
-  {
-    id: "3",
-    title: "Risk Manager",
-    description: "Learn to protect your capital",
-    courses: 4,
-    completedCourses: 0,
-    totalXp: 2500,
-    icon: <Shield className="h-6 w-6" />,
-    color: "bg-orange-500",
-  },
-  {
-    id: "4",
-    title: "Options Expert",
-    description: "Advanced options strategies",
-    courses: 8,
-    completedCourses: 0,
-    totalXp: 8000,
-    icon: <Target className="h-6 w-6" />,
-    color: "bg-purple-500",
-  },
+const tableOfContents = [
+  { id: "getting-started", title: "Getting Started", icon: <BookOpen className="h-4 w-4" /> },
+  { id: "trading-basics", title: "Trading Basics", icon: <TrendingUp className="h-4 w-4" /> },
+  { id: "understanding-markets", title: "Understanding Markets", icon: <BarChart3 className="h-4 w-4" /> },
+  { id: "order-types", title: "Order Types", icon: <Target className="h-4 w-4" /> },
+  { id: "portfolio-management", title: "Portfolio Management", icon: <PieChart className="h-4 w-4" /> },
+  { id: "risk-management", title: "Risk Management", icon: <Shield className="h-4 w-4" /> },
+  { id: "technical-analysis", title: "Technical Analysis", icon: <LineChart className="h-4 w-4" /> },
+  { id: "gamification", title: "Gamification & XP", icon: <Trophy className="h-4 w-4" /> },
 ]
 
 const quickTips = [
-  { id: "1", title: "Never risk more than 2% per trade", category: "Risk" },
-  { id: "2", title: "Always set a stop-loss before entering", category: "Risk" },
-  { id: "3", title: "The trend is your friend", category: "Technical" },
-  { id: "4", title: "Don't chase trades, wait for setups", category: "Psychology" },
-  { id: "5", title: "Keep a trading journal", category: "Discipline" },
+  { tip: "Never risk more than 2% of your portfolio per trade", category: "Risk" },
+  { tip: "Always set a stop-loss before entering a position", category: "Risk" },
+  { tip: "The trend is your friend - don't fight it", category: "Technical" },
+  { tip: "Don't chase trades, wait for proper setups", category: "Psychology" },
+  { tip: "Keep a trading journal to track your decisions", category: "Discipline" },
+  { tip: "Diversify your portfolio across different sectors", category: "Portfolio" },
 ]
 
-// Helper functions
-const getDifficultyColor = (difficulty: Course["difficulty"]) => {
-  switch (difficulty) {
-    case "beginner":
-      return "bg-green-500/10 text-green-500 border-green-500/20"
-    case "intermediate":
-      return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-    case "advanced":
-      return "bg-red-500/10 text-red-500 border-red-500/20"
-  }
-}
-
-const getTypeIcon = (type: Lesson["type"]) => {
-  switch (type) {
-    case "video":
-      return <Video className="h-4 w-4" />
-    case "article":
-      return <FileText className="h-4 w-4" />
-    case "quiz":
-      return <Brain className="h-4 w-4" />
-    case "exercise":
-      return <Target className="h-4 w-4" />
-  }
-}
-
-const formatNumber = (num: number): string => {
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-  return num.toString()
-}
+const glossary = [
+  { term: "Bull Market", definition: "A market condition where prices are rising or expected to rise" },
+  { term: "Bear Market", definition: "A market condition where prices are falling or expected to fall" },
+  { term: "Bid", definition: "The highest price a buyer is willing to pay for a stock" },
+  { term: "Ask", definition: "The lowest price a seller is willing to accept for a stock" },
+  { term: "Spread", definition: "The difference between the bid and ask price" },
+  { term: "Volume", definition: "The number of shares traded during a given period" },
+  { term: "Market Cap", definition: "Total market value of a company's outstanding shares" },
+  { term: "P/E Ratio", definition: "Price-to-Earnings ratio, used to value a company" },
+]
 
 export default function LearnPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-
-  const categories = ["all", "Fundamentals", "Technical Analysis", "Risk Management", "Options", "Psychology", "Strategies", "Advanced"]
-
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = selectedCategory === "all" || course.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
-
-  const totalXpEarned = courses.reduce((acc, course) => {
-    const progress = course.completedLessons / course.lessons
-    return acc + Math.floor(course.xpReward * progress)
-  }, 0)
-
-  const completedCourses = courses.filter((c) => c.completedLessons === c.lessons).length
-  const inProgressCourses = courses.filter((c) => c.completedLessons > 0 && c.completedLessons < c.lessons).length
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col lg:flex-row gap-6">
+      <aside className="lg:w-64 lg:shrink-0">
+        <div className="lg:sticky lg:top-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Documentation
+              </CardTitle>
+              <CardDescription>Trading Guide & Manual</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-auto lg:h-[calc(100vh-200px)]">
+                <nav className="space-y-1 p-4 pt-0">
+                  {tableOfContents.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </button>
+                  ))}
+                </nav>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </aside>
+
+      <main className="flex-1 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Learn</h1>
-          <p className="text-muted-foreground">
-            Master trading skills and earn XP with our courses
+          <h1 className="text-3xl font-bold tracking-tight">Learn to Trade</h1>
+          <p className="text-muted-foreground mt-2">
+            Your comprehensive guide to mastering the TradeQuest platform and trading fundamentals
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Card className="px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-500" />
-              <div>
-                <p className="text-xs text-muted-foreground">XP Earned</p>
-                <p className="text-lg font-bold">{totalXpEarned.toLocaleString()}</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-500" />
-              <div>
-                <p className="text-xs text-muted-foreground">Completed</p>
-                <p className="text-lg font-bold">{completedCourses} Courses</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
 
-      {/* Continue Learning Banner */}
-      {inProgressCourses > 0 && (
-        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20">
-                  <PlayCircle className="h-7 w-7 text-primary" />
+        <section id="getting-started" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <BookOpen className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Continue where you left off</p>
-                  <h3 className="text-lg font-semibold">{currentCourse.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Lesson 9: Practice Exercise: Identify Patterns
+                  <CardTitle>Getting Started</CardTitle>
+                  <CardDescription>Welcome to TradeQuest</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <p>
+                TradeQuest is a gamified paper trading platform designed to help you learn trading without risking real money. 
+                Every new account starts with <strong>$100,000 in virtual currency</strong> to practice with.
+              </p>
+              
+              <h4 className="flex items-center gap-2 mt-6 mb-3">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                What you can do on TradeQuest:
+              </h4>
+              <ul className="space-y-2">
+                <li>Buy and sell stocks with real-time simulated prices</li>
+                <li>Track your portfolio performance and history</li>
+                <li>Compete on leaderboards with other traders</li>
+                <li>Earn XP and achievements as you learn</li>
+                <li>Practice different trading strategies risk-free</li>
+              </ul>
+
+              <div className="flex items-start gap-3 mt-6 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <Lightbulb className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-blue-600 dark:text-blue-400 m-0">Pro Tip</p>
+                  <p className="text-sm text-muted-foreground m-0 mt-1">
+                    Start with the Dashboard to get an overview of your account, then explore the Stocks page to make your first trade.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm font-medium">8/18 lessons</p>
-                  <Progress value={(8 / 18) * 100} className="h-2 w-32 mt-1" />
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="trading-basics" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <Button className="gap-2">
-                  <Play className="h-4 w-4" />
-                  Continue
-                </Button>
+                <div>
+                  <CardTitle>Trading Basics</CardTitle>
+                  <CardDescription>Fundamental concepts every trader should know</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <h4>What is Stock Trading?</h4>
+              <p>
+                Stock trading involves buying and selling shares of publicly traded companies. When you buy a stock, 
+                you&apos;re purchasing a small ownership stake in that company. The goal is to buy stocks at a lower price 
+                and sell them at a higher price for a profit.
+              </p>
+
+              <h4 className="mt-6">Key Concepts</h4>
+              
+              <div className="grid gap-4 md:grid-cols-2 not-prose mt-4">
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span className="font-semibold">Going Long</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Buying a stock expecting its price to increase. You profit when you sell at a higher price than you bought.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">Price Movement</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Stock prices fluctuate based on supply, demand, company performance, market conditions, and news.
+                  </p>
+                </div>
+              </div>
+
+              <h4 className="mt-6">The Trading Process</h4>
+              <ol className="space-y-2">
+                <li><strong>Research:</strong> Analyze stocks using charts, news, and company fundamentals</li>
+                <li><strong>Plan:</strong> Decide your entry price, target profit, and stop-loss level</li>
+                <li><strong>Execute:</strong> Place your buy order through the trading interface</li>
+                <li><strong>Monitor:</strong> Track your position in your portfolio</li>
+                <li><strong>Exit:</strong> Sell when you reach your target or stop-loss</li>
+              </ol>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="understanding-markets" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                  <BarChart3 className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <CardTitle>Understanding Markets</CardTitle>
+                  <CardDescription>How stock markets work</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <h4>Market Hours</h4>
+              <p>The US stock market (NYSE, NASDAQ) is typically open Monday through Friday:</p>
+              <ul>
+                <li><strong>Pre-market:</strong> 4:00 AM - 9:30 AM ET</li>
+                <li><strong>Regular trading:</strong> 9:30 AM - 4:00 PM ET</li>
+                <li><strong>After-hours:</strong> 4:00 PM - 8:00 PM ET</li>
+              </ul>
+              <p className="text-sm text-muted-foreground">
+                Note: TradeQuest simulates 24/7 trading for practice purposes.
+              </p>
+
+              <h4 className="mt-6">Market Indices</h4>
+              <p>Indices track the performance of a group of stocks to represent the overall market:</p>
+              <div className="grid gap-3 not-prose mt-4">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <span className="font-medium">S&P 500</span>
+                  <span className="text-sm text-muted-foreground">Top 500 US companies</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <span className="font-medium">NASDAQ</span>
+                  <span className="text-sm text-muted-foreground">Tech-heavy index</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <span className="font-medium">Dow Jones</span>
+                  <span className="text-sm text-muted-foreground">30 large US companies</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="order-types" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                  <Target className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <CardTitle>Order Types</CardTitle>
+                  <CardDescription>Different ways to execute trades</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="grid gap-4 not-prose">
+                <div className="p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge>Most Common</Badge>
+                    <span className="font-semibold">Market Order</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Executes immediately at the current market price. Best for when you want to enter or exit a position quickly.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">Limit Order</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Sets a specific price at which you want to buy or sell. The order only executes if the market reaches your price.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">Stop-Loss Order</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Automatically sells your position if the price drops to a certain level. Essential for risk management.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">Take-Profit Order</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Automatically sells your position when a target profit is reached. Helps lock in gains.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="portfolio-management" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
+                  <PieChart className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <CardTitle>Portfolio Management</CardTitle>
+                  <CardDescription>Building and maintaining your portfolio</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <h4>Diversification</h4>
+              <p>Don&apos;t put all your eggs in one basket. Spread your investments across different:</p>
+              <ul>
+                <li><strong>Sectors:</strong> Technology, Healthcare, Finance, Energy, etc.</li>
+                <li><strong>Company sizes:</strong> Large-cap, mid-cap, small-cap stocks</li>
+                <li><strong>Risk levels:</strong> Mix stable blue-chips with growth stocks</li>
+              </ul>
+
+              <div className="flex items-start gap-3 mt-4 p-4 bg-amber-500/10 rounded-lg border border-amber-500/20 not-prose">
+                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-amber-600 dark:text-amber-400">Rule of Thumb</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Never risk more than 1-2% of your total portfolio on a single trade.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="risk-management" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10">
+                  <Shield className="h-5 w-5 text-red-500" />
+                </div>
+                <div>
+                  <CardTitle>Risk Management</CardTitle>
+                  <CardDescription>Protecting your capital is priority #1</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="flex items-start gap-3 p-4 bg-red-500/10 rounded-lg border border-red-500/20 not-prose mb-6">
+                <Shield className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-red-600 dark:text-red-400">Golden Rule</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Protect your capital first, profits second. You can&apos;t trade if you&apos;ve lost all your money.
+                  </p>
+                </div>
+              </div>
+
+              <h4>Key Risk Management Strategies</h4>
+              <div className="grid gap-4 not-prose mt-4">
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">1. Always Use Stop-Losses</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Set a stop-loss on every trade to automatically exit if the price moves against you.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">2. Risk-Reward Ratio</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Only take trades where the potential reward is at least 2x the potential risk.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">3. Avoid Overtrading</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Quality over quantity. Wait for high-probability setups rather than forcing trades.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <span className="font-semibold">4. Control Emotions</span>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Fear and greed are a trader&apos;s worst enemies. Stick to your trading plan.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="technical-analysis" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10">
+                  <LineChart className="h-5 w-5 text-cyan-500" />
+                </div>
+                <div>
+                  <CardTitle>Technical Analysis</CardTitle>
+                  <CardDescription>Reading charts and identifying patterns</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <h4>Chart Types</h4>
+              <ul>
+                <li><strong>Candlestick charts:</strong> Show open, high, low, and close prices (most popular)</li>
+                <li><strong>Line charts:</strong> Simple view of closing prices over time</li>
+                <li><strong>Area charts:</strong> Like line charts but filled below the line</li>
+              </ul>
+
+              <h4 className="mt-6">Key Indicators</h4>
+              <div className="grid gap-3 not-prose mt-4">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 rounded-lg border">
+                  <div className="font-semibold sm:min-w-[120px]">Moving Averages</div>
+                  <p className="text-sm text-muted-foreground">Smooth out price data to identify trends.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 rounded-lg border">
+                  <div className="font-semibold sm:min-w-[120px]">RSI</div>
+                  <p className="text-sm text-muted-foreground">Measures if a stock is overbought or oversold.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 rounded-lg border">
+                  <div className="font-semibold sm:min-w-[120px]">Volume</div>
+                  <p className="text-sm text-muted-foreground">High volume confirms price movements.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 rounded-lg border">
+                  <div className="font-semibold sm:min-w-[120px]">Support/Resistance</div>
+                  <p className="text-sm text-muted-foreground">Key price levels where pressure is strong.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="gamification" className="scroll-mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                </div>
+                <div>
+                  <CardTitle>Gamification & XP</CardTitle>
+                  <CardDescription>Level up while you learn</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+              <p>
+                TradeQuest makes learning fun with a comprehensive gamification system. 
+                Earn XP, unlock achievements, and compete with other traders!
+              </p>
+
+              <h4 className="mt-6">Earning XP</h4>
+              <div className="grid gap-3 not-prose mt-4">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <span>Complete a trade</span>
+                  </div>
+                  <Badge variant="secondary">+25 XP</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <span>Profitable trade</span>
+                  </div>
+                  <Badge variant="secondary">+50 XP</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <span>Daily login streak</span>
+                  </div>
+                  <Badge variant="secondary">+10 XP/day</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <span>Achievement unlocked</span>
+                  </div>
+                  <Badge variant="secondary">+100-500 XP</Badge>
+                </div>
+              </div>
+
+              <h4 className="mt-6">Leaderboards</h4>
+              <ul>
+                <li><strong>Portfolio Value:</strong> Highest total portfolio worth</li>
+                <li><strong>Daily Gains:</strong> Best single-day performance</li>
+                <li><strong>XP Leaders:</strong> Most experience points earned</li>
+                <li><strong>Win Rate:</strong> Highest percentage of profitable trades</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </section>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-yellow-500" />
+                Quick Tips
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {quickTips.map((item, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{item.tip}</p>
+                    <Badge variant="secondary" className="text-xs mt-1">{item.category}</Badge>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-blue-500" />
+                Key Terms
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {glossary.map((item, index) => (
+                <div key={index} className="p-3 rounded-lg bg-muted/50">
+                  <p className="font-semibold text-sm">{item.term}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{item.definition}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 shrink-0">
+                <Brain className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Practice Makes Perfect</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  The best way to learn trading is by doing it. Use your virtual $100,000 to experiment 
+                  with different strategies, make mistakes, and learn from them - all without risking real money.
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Main Tabs */}
-      <Tabs defaultValue="courses" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="courses" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Courses</span>
-          </TabsTrigger>
-          <TabsTrigger value="paths" className="gap-2">
-            <Target className="h-4 w-4" />
-            <span className="hidden sm:inline">Learning Paths</span>
-          </TabsTrigger>
-          <TabsTrigger value="progress" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">My Progress</span>
-          </TabsTrigger>
-          <TabsTrigger value="resources" className="gap-2">
-            <Lightbulb className="h-4 w-4" />
-            <span className="hidden sm:inline">Resources</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Courses Tab */}
-        <TabsContent value="courses" className="space-y-6">
-          {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <ScrollArea className="w-full sm:w-auto">
-              <div className="flex gap-2 pb-2">
-                {categories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className="whitespace-nowrap"
-                  >
-                    {category === "all" ? "All Courses" : category}
-                  </Button>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Featured Course */}
-          {selectedCategory === "all" && !searchQuery && (
-            <Card className="overflow-hidden bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-red-500/10 border-yellow-500/20">
-              <CardContent className="p-0">
-                <div className="flex flex-col md:flex-row">
-                  <div className="flex-1 p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30">
-                        <Star className="h-3 w-3 mr-1 fill-current" />
-                        Featured
-                      </Badge>
-                      <Badge variant="outline" className={getDifficultyColor("beginner")}>
-                        Beginner
-                      </Badge>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">Trading Fundamentals 101</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Master the basics of stock trading, market orders, and portfolio management. Perfect for beginners starting their trading journey.
-                    </p>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        2h 30m
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        12 lessons
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {formatNumber(12453)} students
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        4.9
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Button className="gap-2">
-                        <Play className="h-4 w-4" />
-                        Start Course
-                      </Button>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Zap className="h-4 w-4 text-yellow-500" />
-                        <span className="font-semibold">500 XP</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="hidden md:flex items-center justify-center p-6 bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
-                    <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500">
-                      <GraduationCap className="h-16 w-16 text-white" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Course Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredCourses.map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Learning Paths Tab */}
-        <TabsContent value="paths" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            {learningPaths.map((path) => (
-              <Card key={path.id} className="overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className={cn("flex h-14 w-14 items-center justify-center rounded-xl text-white", path.color)}>
-                      {path.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-1">{path.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{path.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                        <div className="flex items-center gap-1">
-                          <BookOpen className="h-4 w-4" />
-                          {path.courses} courses
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Zap className="h-4 w-4 text-yellow-500" />
-                          {path.totalXp.toLocaleString()} XP
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{path.completedCourses}/{path.courses} completed</span>
-                          <span className="font-medium">{Math.round((path.completedCourses / path.courses) * 100)}%</span>
-                        </div>
-                        <Progress value={(path.completedCourses / path.courses) * 100} className="h-2" />
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full mt-4 gap-2">
-                    {path.completedCourses > 0 ? "Continue Path" : "Start Path"}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Progress Tab */}
-        <TabsContent value="progress" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Completed</p>
-                    <p className="text-xl font-bold">{completedCourses} Courses</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                    <PlayCircle className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">In Progress</p>
-                    <p className="text-xl font-bold">{inProgressCourses} Courses</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
-                    <Zap className="h-5 w-5 text-yellow-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total XP</p>
-                    <p className="text-xl font-bold">{totalXpEarned.toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Learning Streak</p>
-                    <p className="text-xl font-bold">5 Days</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Current Course Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                {currentCourse.title}
-              </CardTitle>
-              <CardDescription>Your current course progress</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {currentCourse.lessons.map((lesson, index) => (
-                  <div
-                    key={lesson.id}
-                    className={cn(
-                      "flex items-center gap-4 p-3 rounded-lg border transition-colors",
-                      lesson.isCompleted && "bg-green-500/5 border-green-500/20",
-                      !lesson.isCompleted && !lesson.isLocked && "hover:bg-muted/50 cursor-pointer",
-                      lesson.isLocked && "opacity-50"
-                    )}
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                      {lesson.isCompleted ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      ) : lesson.isLocked ? (
-                        <Lock className="h-4 w-4" />
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("font-medium", lesson.isCompleted && "text-green-600 dark:text-green-400")}>
-                          {lesson.title}
-                        </span>
-                        {getTypeIcon(lesson.type)}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{lesson.duration}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-xs">
-                        <Zap className="h-3 w-3 text-yellow-500" />
-                        {lesson.xpReward} XP
-                      </div>
-                      {!lesson.isLocked && !lesson.isCompleted && (
-                        <Button size="sm" variant="ghost">
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Resources Tab */}
-        <TabsContent value="resources" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Quick Tips */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-yellow-500" />
-                  Quick Trading Tips
-                </CardTitle>
-                <CardDescription>Essential knowledge for every trader</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {quickTips.map((tip, index) => (
-                  <div key={tip.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{tip.title}</p>
-                      <Badge variant="secondary" className="text-xs mt-1">{tip.category}</Badge>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Resource Links */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookMarked className="h-5 w-5 text-blue-500" />
-                  Additional Resources
-                </CardTitle>
-                <CardDescription>Helpful materials and guides</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <FileText className="h-5 w-5 text-blue-500" />
-                  <div className="text-left">
-                    <p className="font-medium">Trading Glossary</p>
-                    <p className="text-xs text-muted-foreground">100+ terms explained</p>
-                  </div>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <Video className="h-5 w-5 text-red-500" />
-                  <div className="text-left">
-                    <p className="font-medium">Video Library</p>
-                    <p className="text-xs text-muted-foreground">50+ tutorial videos</p>
-                  </div>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <Headphones className="h-5 w-5 text-purple-500" />
-                  <div className="text-left">
-                    <p className="font-medium">Trading Podcast</p>
-                    <p className="text-xs text-muted-foreground">Weekly market insights</p>
-                  </div>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <BarChart3 className="h-5 w-5 text-green-500" />
-                  <div className="text-left">
-                    <p className="font-medium">Chart Pattern Cheatsheet</p>
-                    <p className="text-xs text-muted-foreground">Download PDF</p>
-                  </div>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Achievements */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-amber-500" />
-                  Learning Achievements
-                </CardTitle>
-                <CardDescription>Unlock badges by completing courses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="flex flex-col items-center p-4 rounded-lg bg-muted/50 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20 mb-2">
-                      <GraduationCap className="h-6 w-6 text-green-500" />
-                    </div>
-                    <p className="font-medium text-sm">First Steps</p>
-                    <p className="text-xs text-muted-foreground">Complete 1 course</p>
-                    <Badge className="mt-2 bg-green-500/20 text-green-500">Unlocked</Badge>
-                  </div>
-                  <div className="flex flex-col items-center p-4 rounded-lg bg-muted/50 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/20 mb-2">
-                      <Brain className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <p className="font-medium text-sm">Quick Learner</p>
-                    <p className="text-xs text-muted-foreground">Complete 5 courses</p>
-                    <Badge variant="outline" className="mt-2">3/5</Badge>
-                  </div>
-                  <div className="flex flex-col items-center p-4 rounded-lg bg-muted/50 text-center opacity-50">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/20 mb-2">
-                      <Sparkles className="h-6 w-6 text-purple-500" />
-                    </div>
-                    <p className="font-medium text-sm">Knowledge Seeker</p>
-                    <p className="text-xs text-muted-foreground">Complete 10 courses</p>
-                    <Badge variant="outline" className="mt-2">
-                      <Lock className="h-3 w-3 mr-1" />
-                      Locked
-                    </Badge>
-                  </div>
-                  <div className="flex flex-col items-center p-4 rounded-lg bg-muted/50 text-center opacity-50">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20 mb-2">
-                      <Trophy className="h-6 w-6 text-amber-500" />
-                    </div>
-                    <p className="font-medium text-sm">Master Trader</p>
-                    <p className="text-xs text-muted-foreground">Complete all courses</p>
-                    <Badge variant="outline" className="mt-2">
-                      <Lock className="h-3 w-3 mr-1" />
-                      Locked
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+      </main>
     </div>
-  )
-}
-
-// Course Card Component
-function CourseCard({ course }: { course: Course }) {
-  const progressPercent = (course.completedLessons / course.lessons) * 100
-  const isCompleted = course.completedLessons === course.lessons
-  const isInProgress = course.completedLessons > 0 && !isCompleted
-
-  return (
-    <Card className={cn("overflow-hidden transition-all hover:shadow-md", course.isLocked && "opacity-60")}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <Badge variant="outline" className={getDifficultyColor(course.difficulty)}>
-            {course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
-          </Badge>
-          {course.isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-          {isCompleted && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-        </div>
-
-        <h3 className="font-semibold mb-2 line-clamp-2">{course.title}</h3>
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{course.description}</p>
-
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-3">
-          <div className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {course.duration}
-          </div>
-          <div className="flex items-center gap-1">
-            <BookOpen className="h-3.5 w-3.5" />
-            {course.lessons} lessons
-          </div>
-          <div className="flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-            {course.rating}
-          </div>
-        </div>
-
-        {isInProgress && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span>{course.completedLessons}/{course.lessons} completed</span>
-              <span className="font-medium">{Math.round(progressPercent)}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-1.5" />
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-sm">
-            <Zap className="h-4 w-4 text-yellow-500" />
-            <span className="font-semibold">{course.xpReward} XP</span>
-          </div>
-          <Button size="sm" disabled={course.isLocked} variant={isInProgress ? "default" : "outline"}>
-            {course.isLocked ? (
-              <>
-                <Lock className="h-3 w-3 mr-1" />
-                Locked
-              </>
-            ) : isCompleted ? (
-              <>
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                Review
-              </>
-            ) : isInProgress ? (
-              <>
-                <Play className="h-3 w-3 mr-1" />
-                Continue
-              </>
-            ) : (
-              <>
-                <Play className="h-3 w-3 mr-1" />
-                Start
-              </>
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   )
 }

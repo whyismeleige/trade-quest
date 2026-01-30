@@ -251,6 +251,7 @@ export default function DashboardLayout({
          </Link>
 
          <div className="flex items-center gap-1">
+           <AnimatedThemeToggler />
            <DropdownMenu>
              <DropdownMenuTrigger asChild>
                <Button variant="ghost" size="icon" className="relative h-9 w-9">
