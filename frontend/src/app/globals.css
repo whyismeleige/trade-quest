@@ -173,6 +173,78 @@
   }
 }
 
+/* Custom Driver.js Neubrutalism Aesthetic */
+.driverjs-theme {
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+  /* Matching your theme's hard border */
+  border: 3px solid var(--border) !important; 
+  border-radius: var(--radius) !important;
+  /* Matching your theme's --shadow-md */
+  box-shadow: 4px 4px 0px 0px hsl(0 0% 0% / 1.00) !important;
+  padding: 24px !important;
+  max-width: 350px !important;
+}
+
+.driverjs-theme .driver-popover-title {
+  font-family: var(--font-mono) !important; /* Using your Space Mono */
+  font-size: 1.4rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase;
+  color: var(--primary) !important;
+  margin-bottom: 10px !important;
+}
+
+.driverjs-theme .driver-popover-description {
+  font-family: var(--font-sans) !important;
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+  color: var(--foreground) !important;
+}
+
+/* Customize Buttons to match your Neubrutalist theme */
+.driverjs-theme .driver-popover-footer button {
+  background-color: var(--secondary) !important; /* Yellow */
+  color: var(--secondary-foreground) !important;
+  border: 2px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-weight: 800 !important;
+  font-family: var(--font-mono) !important;
+  text-shadow: none !important;
+  box-shadow: 2px 2px 0px 0px var(--border) !important;
+  transition: transform 0.1s ease !important;
+}
+
+.driverjs-theme .driver-popover-footer button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px var(--border) !important;
+}
+
+.driverjs-theme .driver-popover-footer .driver-popover-next-btn {
+  background-color: var(--primary) !important; /* Red */
+  color: var(--primary-foreground) !important;
+}
+
+.driverjs-theme .driver-popover-footer .driver-popover-close-btn {
+  color: var(--foreground) !important;
+}
+
+/* The Highlight Stage */
+.driver-stage-no-animation {
+  border: 4px solid var(--primary) !important;
+  border-radius: var(--radius) !important;
+  /* High contrast overlay for hackathon presentation */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85) !important; 
+}
+
+/* Progress bar color */
+.driverjs-theme .driver-popover-progress-text {
+  color: var(--muted-foreground) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: bold;
+}
+
 /* Animated theme toggler view transition styles */
 ::view-transition-old(root),
 ::view-transition-new(root) {

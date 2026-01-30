@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useLeagueSocket } from "@/hooks/useLeagueSocket"
 
 export default function LeaderboardPage() {
   const dispatch = useAppDispatch()
@@ -42,6 +43,8 @@ export default function LeaderboardPage() {
     loading, 
     error 
   } = useAppSelector((state) => state.leagues)
+
+  useLeagueSocket();
 
   const [searchQuery, setSearchQuery] = useState("")
 

@@ -31,7 +31,7 @@ const achievementRoutes = require("./routes/achievement.routes");
 
 app.use(
   cors({
-    origin: ["https://trade-quest-umber.vercel.app", "http://localhost:3000"],
+    origin: ["https://trade-quest.piyushbuilds.me","https://trade-quest-umber.vercel.app", "http://localhost:3000"],
     credentials: true,
   })
 );

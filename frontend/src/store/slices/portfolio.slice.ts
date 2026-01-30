@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { portfolioApi } from "@/lib/api/portfolio.api";
 import { PortfolioState } from "@/types/redux.types";
+import toast from "react-hot-toast";
 
 // ==================== INITIAL STATE ====================
 const initialState: PortfolioState = {
@@ -23,7 +24,7 @@ export const fetchPortfolio = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch portfolio");
     }
-  }
+  },
 );
 
 // ==================== SLICE ====================
@@ -40,7 +41,7 @@ const portfolioSlice = createSlice({
       state.lastUpdated = null;
       state.error = null;
     },
-    
+
     // Update single holding price (from WebSocket)
     updateHoldingPrice: (state, action) => {
       const { symbol, currentPrice } = action.payload;
@@ -48,13 +49,17 @@ const portfolioSlice = createSlice({
       if (holding) {
         holding.currentPrice = currentPrice;
         holding.currentValue = holding.quantity * currentPrice;
-        holding.profitLoss = holding.currentValue - (holding.quantity * holding.averagePrice);
+        holding.profitLoss =
+          holding.currentValue - holding.quantity * holding.averagePrice;
       }
       // Recalculate total value
-      const holdingsValue = state.holdings.reduce((sum, h) => sum + h.currentValue, 0);
+      const holdingsValue = state.holdings.reduce(
+        (sum, h) => sum + h.currentValue,
+        0,
+      );
       state.totalValue = state.cashBalance + holdingsValue;
     },
-    
+
     // Update cash balance after trade
     updateCashBalance: (state, action) => {
       state.cashBalance = action.payload;
@@ -73,6 +78,10 @@ const portfolioSlice = createSlice({
         state.holdings = action.payload.data.holdings;
         state.lastUpdated = Date.now();
         state.error = null;
+
+        if (state.lastUpdated) {
+          toast.success("Portfolio updated", { duration: 2000 });
+        }
       })
       .addCase(fetchPortfolio.rejected, (state, action) => {
         state.loading = false;
@@ -81,5 +90,6 @@ const portfolioSlice = createSlice({
   },
 });
 
-export const { clearPortfolio, updateHoldingPrice, updateCashBalance } = portfolioSlice.actions;
+export const { clearPortfolio, updateHoldingPrice, updateCashBalance } =
+  portfolioSlice.actions;
 export default portfolioSlice.reducer;

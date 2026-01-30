@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -12,19 +12,27 @@ import {
   Clock,
   ChevronRight,
   Flame,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
   AreaChartComponent,
   PieChartComponent,
   GaugeChart,
-} from "@/components/charts"
-import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { fetchPortfolio } from "@/store/slices/portfolio.slice"
+} from "@/components/charts";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchPortfolio } from "@/store/slices/portfolio.slice";
+import { initializeGuide } from "@/lib/driver";
+import { useMounted } from "@/hooks/useMounted";
 
 // Mock data
 const portfolioHistory = [
@@ -35,7 +43,7 @@ const portfolioHistory = [
   { name: "Fri", value: 10800 },
   { name: "Sat", value: 11500 },
   { name: "Sun", value: 12000 },
-]
+];
 
 const leaderboardData = [
   { rank: 1, name: "Sarah Chen", score: 24500, change: 12.5 },
@@ -43,49 +51,154 @@ const leaderboardData = [
   { rank: 3, name: "Alex Kumar", score: 18500, change: 5.2 },
   { rank: 4, name: "You", score: 12000, change: 20.0 },
   { rank: 5, name: "Emma Davis", score: 9500, change: -2.1 },
-]
+];
 
 const portfolioAllocation = [
   { name: "Technology", value: 4800, color: "var(--primary)" },
   { name: "Finance", value: 3000, color: "var(--secondary)" },
   { name: "Healthcare", value: 2400, color: "var(--accent)" },
   { name: "Energy", value: 1800, color: "var(--chart-4)" },
-]
+];
 
 const recentTrades = [
-  { id: 1, symbol: "AAPL", name: "Apple Inc.", type: "BUY", price: 178.5, quantity: 10, profit: 150, time: "2m ago", change: 2.3 },
-  { id: 2, symbol: "TSLA", name: "Tesla Inc.", type: "SELL", price: 242.8, quantity: 5, profit: -80, time: "15m ago", change: -1.2 },
-  { id: 3, symbol: "GOOGL", name: "Alphabet Inc.", type: "BUY", price: 140.2, quantity: 8, profit: 200, time: "1h ago", change: 3.1 },
-  { id: 4, symbol: "MSFT", name: "Microsoft Corp.", type: "BUY", price: 378.9, quantity: 3, profit: 85, time: "2h ago", change: 1.8 },
-]
+  {
+    id: 1,
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    type: "BUY",
+    price: 178.5,
+    quantity: 10,
+    profit: 150,
+    time: "2m ago",
+    change: 2.3,
+  },
+  {
+    id: 2,
+    symbol: "TSLA",
+    name: "Tesla Inc.",
+    type: "SELL",
+    price: 242.8,
+    quantity: 5,
+    profit: -80,
+    time: "15m ago",
+    change: -1.2,
+  },
+  {
+    id: 3,
+    symbol: "GOOGL",
+    name: "Alphabet Inc.",
+    type: "BUY",
+    price: 140.2,
+    quantity: 8,
+    profit: 200,
+    time: "1h ago",
+    change: 3.1,
+  },
+  {
+    id: 4,
+    symbol: "MSFT",
+    name: "Microsoft Corp.",
+    type: "BUY",
+    price: 378.9,
+    quantity: 3,
+    profit: 85,
+    time: "2h ago",
+    change: 1.8,
+  },
+];
 
 const achievements = [
-  { id: 1, name: "First Trade", description: "Complete your first trade", icon: "🎯", progress: 100, unlocked: true },
-  { id: 2, name: "Hot Streak", description: "Win 5 trades in a row", icon: "🔥", progress: 100, unlocked: true },
-  { id: 3, name: "Risk Taker", description: "Make a trade over $5000", icon: "⚡", progress: 60, unlocked: false },
-  { id: 4, name: "Diversified", description: "Own stocks in 5 sectors", icon: "🌟", progress: 80, unlocked: false },
-]
+  {
+    id: 1,
+    name: "First Trade",
+    description: "Complete your first trade",
+    icon: "🎯",
+    progress: 100,
+    unlocked: true,
+  },
+  {
+    id: 2,
+    name: "Hot Streak",
+    description: "Win 5 trades in a row",
+    icon: "🔥",
+    progress: 100,
+    unlocked: true,
+  },
+  {
+    id: 3,
+    name: "Risk Taker",
+    description: "Make a trade over $5000",
+    icon: "⚡",
+    progress: 60,
+    unlocked: false,
+  },
+  {
+    id: 4,
+    name: "Diversified",
+    description: "Own stocks in 5 sectors",
+    icon: "🌟",
+    progress: 80,
+    unlocked: false,
+  },
+];
 
 const watchlist = [
-  { symbol: "NVDA", name: "NVIDIA", price: 875.28, change: 4.52, changePercent: 0.52 },
-  { symbol: "AMZN", name: "Amazon", price: 178.25, change: -2.15, changePercent: -1.19 },
-  { symbol: "META", name: "Meta", price: 505.95, change: 8.32, changePercent: 1.67 },
-]
+  {
+    symbol: "NVDA",
+    name: "NVIDIA",
+    price: 875.28,
+    change: 4.52,
+    changePercent: 0.52,
+  },
+  {
+    symbol: "AMZN",
+    name: "Amazon",
+    price: 178.25,
+    change: -2.15,
+    changePercent: -1.19,
+  },
+  {
+    symbol: "META",
+    name: "Meta",
+    price: 505.95,
+    change: 8.32,
+    changePercent: 1.67,
+  },
+];
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
-  const [selectedPeriod, setSelectedPeriod] = useState("1W")
+  const [selectedPeriod, setSelectedPeriod] = useState("1W");
+  const mounted = useMounted();
   const { user } = useAppSelector((state) => state.auth);
   const portfolio = useAppSelector((state) => state.portfolio);
   useEffect(() => {
     dispatch(fetchPortfolio());
-  },[dispatch])
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Only run the tour if the user hasn't seen it yet
+    const hasSeenTour = localStorage.getItem("tradequest_tour_seen");
+
+    if (user?.name && !hasSeenTour) {
+      // Small timeout to ensure DOM is fully painted
+      const timer = setTimeout(() => {
+        const tour = initializeGuide(user.name.split(" ")[0]);
+        tour.drive();
+        localStorage.setItem("tradequest_tour_seen", "true");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user?.name || "User"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, {mounted ? user?.name || "User" : "User"}
+          </h1>
           <p className="text-muted-foreground">
             Here&apos;s what&apos;s happening with your portfolio today.
           </p>
@@ -97,7 +210,9 @@ export default function DashboardPage() {
                 <Flame className="h-5 w-5 text-orange-500" />
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Win Streak</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Win Streak
+                </p>
                 <p className="text-xl font-bold text-orange-500">5 Days</p>
               </div>
             </CardContent>
@@ -108,7 +223,9 @@ export default function DashboardPage() {
                 <Trophy className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">League Rank</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  League Rank
+                </p>
                 <p className="text-xl font-bold text-primary">#4</p>
               </div>
             </CardContent>
@@ -120,7 +237,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Portfolio Value"
-          value={portfolio.cashBalance}
+          value={mounted ? portfolio.cashBalance : "..."}
           change="+20.0%"
           changeValue="+$2,000"
           isPositive={true}
@@ -147,7 +264,7 @@ export default function DashboardPage() {
         /> */}
         <StatsCard
           title="XP Points"
-          value={user?.currentXp || 0}
+          value={mounted ? user?.currentXp || 0 : 0}
           change="+150 today"
           changeValue=""
           isPositive={true}
@@ -207,7 +324,10 @@ export default function DashboardPage() {
             <Separator className="my-4" />
             <div className="space-y-3">
               {portfolioAllocation.map((item) => (
-                <div key={item.name} className="flex items-center justify-between">
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-2">
                     <div
                       className="h-3 w-3 rounded-full"
@@ -258,13 +378,15 @@ export default function DashboardPage() {
                         player.rank === 1
                           ? "bg-yellow-500/20 text-yellow-500"
                           : player.rank === 2
-                          ? "bg-slate-400/20 text-slate-400"
-                          : player.rank === 3
-                          ? "bg-orange-500/20 text-orange-500"
-                          : "bg-muted text-muted-foreground"
+                            ? "bg-slate-400/20 text-slate-400"
+                            : player.rank === 3
+                              ? "bg-orange-500/20 text-orange-500"
+                              : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {player.rank <= 3 ? ["🥇", "🥈", "🥉"][player.rank - 1] : player.rank}
+                      {player.rank <= 3
+                        ? ["🥇", "🥈", "🥉"][player.rank - 1]
+                        : player.rank}
                     </div>
                     <div>
                       <p className="font-semibold">
@@ -310,9 +432,19 @@ export default function DashboardPage() {
                 label="Win Rate"
                 sections={[
                   { min: 0, max: 40, color: "var(--primary)", label: "Poor" },
-                  { min: 41, max: 60, color: "var(--secondary)", label: "Average" },
+                  {
+                    min: 41,
+                    max: 60,
+                    color: "var(--secondary)",
+                    label: "Average",
+                  },
                   { min: 61, max: 80, color: "var(--accent)", label: "Good" },
-                  { min: 81, max: 100, color: "var(--chart-4)", label: "Excellent" },
+                  {
+                    min: 81,
+                    max: 100,
+                    color: "var(--chart-4)",
+                    label: "Excellent",
+                  },
                 ]}
                 size={160}
               />
@@ -368,13 +500,17 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold">{trade.symbol}</span>
                         <Badge
-                          variant={trade.type === "BUY" ? "default" : "destructive"}
+                          variant={
+                            trade.type === "BUY" ? "default" : "destructive"
+                          }
                           className="text-xs"
                         >
                           {trade.type}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{trade.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {trade.name}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -420,7 +556,9 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{achievement.icon}</span>
-                        <span className="font-medium text-sm">{achievement.name}</span>
+                        <span className="font-medium text-sm">
+                          {achievement.name}
+                        </span>
                       </div>
                       {achievement.unlocked && (
                         <Badge variant="secondary" className="text-xs">
@@ -429,7 +567,10 @@ export default function DashboardPage() {
                       )}
                     </div>
                     {!achievement.unlocked && (
-                      <Progress value={achievement.progress} className="h-1.5" />
+                      <Progress
+                        value={achievement.progress}
+                        className="h-1.5"
+                      />
                     )}
                   </div>
                 ))}
@@ -452,7 +593,9 @@ export default function DashboardPage() {
                   >
                     <div>
                       <p className="font-semibold">{stock.symbol}</p>
-                      <p className="text-xs text-muted-foreground">{stock.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {stock.name}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">${stock.price}</p>
@@ -478,7 +621,7 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function StatsCard({
@@ -489,13 +632,13 @@ function StatsCard({
   icon,
   description,
 }: {
-  title: string
-  value: string | number
-  change: string
-  changeValue: string
-  isPositive: boolean
-  icon: React.ReactNode
-  description: string
+  title: string;
+  value: string | number;
+  change: string;
+  changeValue: string;
+  isPositive: boolean;
+  icon: React.ReactNode;
+  description: string;
 }) {
   return (
     <Card>
@@ -505,7 +648,9 @@ function StatsCard({
         </CardTitle>
         <div
           className={`rounded-lg p-2 ${
-            isPositive ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"
+            isPositive
+              ? "bg-accent/10 text-accent"
+              : "bg-primary/10 text-primary"
           }`}
         >
           {icon}
@@ -530,5 +675,5 @@ function StatsCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
