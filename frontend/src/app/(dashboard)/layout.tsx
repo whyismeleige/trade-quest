@@ -175,7 +175,31 @@ export default function DashboardLayout({
                 />
               </Link>
             )}
+            {!collapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCollapsed(true)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+
+          {/* Expand Button when collapsed */}
+          {collapsed && (
+            <div className="flex justify-center py-2 border-b">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCollapsed(false)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
 
           {/* Main Navigation */}
           <div className="flex-1 overflow-y-auto py-4">
@@ -227,7 +251,7 @@ export default function DashboardLayout({
             </nav>
           </div>
 
-          {/* User Profile & Collapse Toggle */}
+          {/* User Profile */}
           <div className="border-t p-4">
             {!collapsed ? (
               <div className="flex items-center gap-3">
@@ -242,29 +266,13 @@ export default function DashboardLayout({
                     Level 12 • 2,450 XP
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setCollapsed(true)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/avatars/user.png" alt="User" />
                   <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                 </Avatar>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setCollapsed(false)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
               </div>
             )}
           </div>
