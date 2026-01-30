@@ -5,10 +5,12 @@ import { AnimatedThemeToggler } from "@/components/providers/theme.provider"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { TrendingUp, Trophy, Users, Zap } from "lucide-react"
+import PublicRoute from "@/components/routes/PublicRoute"
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <PublicRoute>
+      <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-2">
@@ -132,5 +134,6 @@ export default function Page() {
         <p>&copy; 2026 TradeQuest. All rights reserved. | Gamified Trading League for Students</p>
       </footer>
     </div>
+    </PublicRoute>
   )
 }

@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const TradeSchema = new mongoose.Schema(
   {
     userId: {

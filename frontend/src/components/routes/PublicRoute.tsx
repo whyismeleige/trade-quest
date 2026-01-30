@@ -13,7 +13,7 @@ export default function PublicRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (mounted && isAuthenticated && user) {
-      router.replace(`/gigs`);
+      router.replace(`/dashboard`);
     }
   }, [mounted, isAuthenticated, router, user]);
 
