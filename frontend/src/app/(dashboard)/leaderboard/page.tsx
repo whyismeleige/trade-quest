@@ -151,19 +151,19 @@ export default function LeaderboardPage() {
                 <p className="text-muted-foreground">Keep trading to climb higher!</p>
               </div>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="grid grid-cols-3 gap-4 sm:flex sm:items-center sm:gap-6">
               <div className="text-center">
                 <div className="flex items-center gap-1 justify-center">
                   {rankChange.direction === "up" && (
-                    <ChevronUp className="h-5 w-5 text-accent" />
+                    <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
                   )}
                   {rankChange.direction === "down" && (
-                    <ChevronDown className="h-5 w-5 text-primary" />
+                    <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   )}
                   {rankChange.direction === "same" && (
-                    <Minus className="h-5 w-5 text-muted-foreground" />
+                    <Minus className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                   )}
-                  <span className={`text-2xl font-bold ${
+                  <span className={`text-lg sm:text-2xl font-bold ${
                     rankChange.direction === "up" ? "text-accent" :
                     rankChange.direction === "down" ? "text-primary" :
                     "text-muted-foreground"
@@ -173,14 +173,14 @@ export default function LeaderboardPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">Rank Change</p>
               </div>
-              <Separator orientation="vertical" className="h-12" />
+              <Separator orientation="vertical" className="h-12 hidden sm:block" />
               <div className="text-center">
-                <p className="text-2xl font-bold">${currentUserStats.portfolioValue.toLocaleString()}</p>
+                <p className="text-lg sm:text-2xl font-bold">${currentUserStats.portfolioValue.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Portfolio Value</p>
               </div>
-              <Separator orientation="vertical" className="h-12" />
+              <Separator orientation="vertical" className="h-12 hidden sm:block" />
               <div className="text-center">
-                <p className={`text-2xl font-bold ${currentUserStats.change >= 0 ? "text-accent" : "text-primary"}`}>
+                <p className={`text-lg sm:text-2xl font-bold ${currentUserStats.change >= 0 ? "text-accent" : "text-primary"}`}>
                   {currentUserStats.change >= 0 ? "+" : ""}{currentUserStats.change.toFixed(2)}%
                 </p>
                 <p className="text-xs text-muted-foreground">Return</p>

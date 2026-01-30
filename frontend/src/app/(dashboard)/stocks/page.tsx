@@ -50,54 +50,53 @@ export default function MarketplacePage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur">
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <BarChart3 className="h-6 w-6 text-primary" /> Marketplace
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Discover and trade real-time stocks
-              </p>
-            </div>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-primary" /> Marketplace
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Discover and trade real-time stocks
+            </p>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative w-full md:w-80">
-                {searchLoading ? (
-                  <Loader2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-                ) : (
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                )}
-                <Input
-                  placeholder="Search symbols (e.g. AAPL)..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant={viewMode === "grid" ? "secondary" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "secondary" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full md:w-80">
+              {searchLoading ? (
+                <Loader2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+              ) : (
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              )}
+              <Input
+                placeholder="Search symbols (e.g. AAPL)..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </header>
+        </div>
 
-        <main className="container mx-auto px-4 py-6">
-          <Tabs defaultValue="stocks" className="space-y-4">
+        {/* Content */}
+        <Tabs defaultValue="stocks" className="space-y-4">
             <TabsContent value="stocks" className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
@@ -215,7 +214,6 @@ export default function MarketplacePage() {
               )}
             </TabsContent>
           </Tabs>
-        </main>
       </div>
     </TooltipProvider>
   );

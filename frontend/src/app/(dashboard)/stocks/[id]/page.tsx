@@ -177,11 +177,11 @@ export default function StockPage() {
       <div className="min-h-screen bg-background flex flex-col">
         
         {/* --- HEADER --- */}
-        <header className="border-b bg-card px-6 py-3 flex items-center justify-between shadow-sm z-10">
-          <div className="flex items-center gap-6">
+        <header className="border-b bg-card px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm z-10">
+          <div className="flex items-center gap-3 sm:gap-6">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-xl font-bold gap-2 px-2 hover:bg-muted/50">
+                <Button variant="ghost" className="text-lg sm:text-xl font-bold gap-2 px-2 hover:bg-muted/50">
                   {selectedStock?.symbol || stockSymbol}
                   <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
@@ -196,13 +196,13 @@ export default function StockPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold tracking-tight">
+            <div className="flex items-baseline gap-2 sm:gap-3">
+              <span className="text-xl sm:text-3xl font-bold tracking-tight">
                 ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <Badge 
                 variant="outline"
-                className={`flex items-center gap-1 font-mono text-sm border-none px-2 py-0.5 ${
+                className={`flex items-center gap-1 font-mono text-xs sm:text-sm border-none px-2 py-0.5 ${
                   isPositive 
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
                     : "bg-red-500/10 text-red-600 dark:text-red-400"
@@ -214,7 +214,7 @@ export default function StockPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <div className="flex bg-muted/50 p-1 rounded-lg">
               {intervals.map((interval) => (
                 <Button
@@ -222,7 +222,7 @@ export default function StockPage() {
                   variant={selectedInterval === interval ? "outline" : "ghost"}
                   size="sm"
                   onClick={() => setSelectedInterval(interval)}
-                  className={`h-7 px-3 text-xs font-medium rounded-md transition-all ${
+                  className={`h-7 px-2 sm:px-3 text-xs font-medium rounded-md transition-all ${
                     selectedInterval === interval 
                       ? "shadow-sm bg-background text-foreground" 
                       : "text-muted-foreground hover:text-foreground"
@@ -233,10 +233,10 @@ export default function StockPage() {
               ))}
             </div>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
-            {/* Wallet Display */}
-            <div className="flex flex-col items-end text-right px-2 min-w-[100px]">
+            {/* Wallet Display - Hidden on small screens, shown on md+ */}
+            <div className="hidden md:flex flex-col items-end text-right px-2 min-w-[100px]">
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
                 <Wallet className="w-3 h-3" /> Balance
               </span>
@@ -245,9 +245,9 @@ export default function StockPage() {
               </span>
             </div>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 hidden lg:block" />
 
-            <div className="flex flex-col items-end text-[10px] text-muted-foreground leading-tight">
+            <div className="hidden lg:flex flex-col items-end text-[10px] text-muted-foreground leading-tight">
               <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> UPDATED</span>
               <span className="font-mono">{lastUpdated}</span>
             </div>
@@ -255,12 +255,12 @@ export default function StockPage() {
         </header>
 
         {/* --- MAIN CONTENT --- */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
           
           {/* LEFT: CHART */}
-          <div className="flex-1 p-4 md:p-6 overflow-hidden bg-gradient-to-b from-background to-muted/20">
+          <div className="flex-1 p-3 sm:p-4 md:p-6 overflow-hidden bg-gradient-to-b from-background to-muted/20 min-h-[300px] lg:min-h-0">
             <Card className="h-full border shadow-sm bg-card/50 backdrop-blur-sm flex flex-col">
-              <CardContent className="p-6 h-full flex flex-col">
+              <CardContent className="p-3 sm:p-6 h-full flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-semibold tracking-tight">Price Performance</h3>
@@ -295,9 +295,9 @@ export default function StockPage() {
           </div>
 
           {/* RIGHT: TRADING SIDEBAR */}
-          <div className="w-80 xl:w-96 border-l bg-card flex flex-col h-full shadow-xl z-20">
+          <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l bg-card flex flex-col lg:h-full shadow-xl z-20">
             {/* Header */}
-            <div className="p-6 xl:p-8 border-b bg-muted/10">
+            <div className="p-4 sm:p-6 xl:p-8 border-b bg-muted/10">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">About Asset</span>
               <h2 className="text-2xl xl:text-3xl font-black mt-2 tracking-tight line-clamp-1" title={selectedStock?.name}>
                 {selectedStock?.name || stockSymbol}
@@ -312,7 +312,7 @@ export default function StockPage() {
             </div>
 
             {/* Form */}
-            <div className="flex-1 p-6 xl:p-8 space-y-6 overflow-y-auto">
+            <div className="flex-1 p-4 sm:p-6 xl:p-8 space-y-4 sm:space-y-6 overflow-y-auto">
               
               <div className="space-y-4">
                 <div className="flex justify-between items-end">

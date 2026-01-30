@@ -202,15 +202,15 @@ export default function PortfolioPage() {
               <CardHeader>
                 <CardTitle>Current Holdings</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
+              <CardContent className="overflow-x-auto">
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Asset</TableHead>
-                      <TableHead className="text-right">Quantity</TableHead>
-                      <TableHead className="text-right">Avg Price</TableHead>
-                      <TableHead className="text-right">Market Price</TableHead>
-                      <TableHead className="text-right">Total Value</TableHead>
+                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">Avg Price</TableHead>
+                      <TableHead className="text-right">Mkt Price</TableHead>
+                      <TableHead className="text-right hidden md:table-cell">Total Value</TableHead>
                       <TableHead className="text-right">P&L</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -223,9 +223,9 @@ export default function PortfolioPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">{holding.quantity}</TableCell>
-                        <TableCell className="text-right">${holding.averagePrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right hidden sm:table-cell">${holding.averagePrice.toFixed(2)}</TableCell>
                         <TableCell className="text-right">${holding.currentPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-medium">${holding.currentValue.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-medium hidden md:table-cell">${holding.currentValue.toLocaleString()}</TableCell>
                         <TableCell className={`text-right font-bold ${holding.profitLoss >= 0 ? "text-accent" : "text-primary"}`}>
                           {holding.profitLoss >= 0 ? "+" : ""}{holding.profitLoss.toFixed(2)}
                         </TableCell>
@@ -271,14 +271,14 @@ export default function PortfolioPage() {
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
+            <CardContent className="overflow-x-auto">
+              <Table className="min-w-[500px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Symbol</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Qty</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
