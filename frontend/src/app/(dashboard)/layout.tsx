@@ -83,11 +83,6 @@ const mainNavItems: NavItem[] = [
     badge: "Live",
   },
   {
-    title: "Analytics (Coming Soon)",
-    href: "/dashboard/analytics",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
     title: "Trade History",
     href: "/tradehistory",
     icon: <History className="h-5 w-5" />,
@@ -97,23 +92,23 @@ const mainNavItems: NavItem[] = [
 const secondaryNavItems: NavItem[] = [
   {
     title: "Achievements",
-    href: "/dashboard/achievements",
+    href: "/achievements",
     icon: <Medal className="h-5 w-5" />,
     badge: "3 New",
   },
   {
     title: "Challenges",
-    href: "/dashboard/challenges",
+    href: "/challenges",
     icon: <Target className="h-5 w-5" />,
   },
   {
     title: "Community",
-    href: "/dashboard/community",
+    href: "/community",
     icon: <Users className="h-5 w-5" />,
   },
   {
     title: "Learn",
-    href: "/dashboard/learn",
+    href: "/learn",
     icon: <BookOpen className="h-5 w-5" />,
   },
 ]
@@ -121,12 +116,12 @@ const secondaryNavItems: NavItem[] = [
 const bottomNavItems: NavItem[] = [
   {
     title: "Settings",
-    href: "/dashboard/settings",
+    href: "/settings",
     icon: <Settings className="h-5 w-5" />,
   },
   {
     title: "Help & Support",
-    href: "/dashboard/help",
+    href: "/help",
     icon: <HelpCircle className="h-5 w-5" />,
   },
 ]
@@ -331,9 +326,15 @@ export default function DashboardLayout({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">Piyush</p>
-                      <p className="text-xs text-muted-foreground">piyush@example.com</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src="/avatars/user.png" alt="User" />
+                        <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">Piyush</p>
+                        <p className="text-xs text-muted-foreground">piyush@example.com</p>
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -345,6 +346,7 @@ export default function DashboardLayout({
                     <HelpCircle className="mr-2 h-4 w-4" />
                     Help & Support
                   </DropdownMenuItem>
+                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
