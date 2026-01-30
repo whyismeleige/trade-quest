@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
+// @todo Add Achievements
+
 const getRandomAvatar = () => {
   const seed = crypto.randomUUID();
   const styles = [
@@ -71,6 +73,22 @@ const UserSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: getRandomAvatar(),
+    },
+    totalPoints: {
+      type: Number,
+      default: 0,
+      min: [0, "Total Points cannot be negative"],
+      index: -1,
+    },
+    level: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    currentXp: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     activity: {
       lastLogin: {

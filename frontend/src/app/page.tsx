@@ -16,10 +16,10 @@ export default function Page() {
           <h1 className="text-2xl font-bold">TradeQuest</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/auth">
+          <Link href="/auth?view=login">
             <Button variant="default">Sign In</Button>
           </Link>
-          <Link href="/auth">
+          <Link href="/auth?view=signup">
             <Button variant="default">Register</Button>
           </Link>
           <AnimatedThemeToggler className="rounded-full border p-2 hover:bg-muted transition-colors" />

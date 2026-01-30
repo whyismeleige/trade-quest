@@ -4,8 +4,8 @@ import Providers from "@/components/providers";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: "Code Sprint 2k26 - Boilerplate",
-  description: "Boilerplate App for Code Sprint 2k26",
+  title: "Trade Quest",
+  description: "Gamified Trade Quest Platform",
 };
 
 export default function RootLayout({
