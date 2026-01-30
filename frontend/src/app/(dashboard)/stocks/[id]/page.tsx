@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   TrendingUp, 
@@ -9,7 +9,8 @@ import {
   Loader2, 
   AlertCircle, 
   Clock,
-  Wallet 
+  Wallet,
+  RefreshCcw 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,19 +45,20 @@ export default function StockPage() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  
+  const [mounted, setMounted] = useState(false);
+  const [isChartLoading, setIsChartLoading] = useState(true);
 
+  // Activate Socket Stream
   useMarketStream();
 
-  // 1. Handle Route Params
   const rawId = params.stockid || params.id;
   const stockSymbol = typeof rawId === 'string' ? rawId.toUpperCase() : "AAPL";
 
-  // 2. GET STOCK DATA FROM REDUX
   const { selectedStock, stockHistory, loading: stockLoading } = useAppSelector(
     (state) => state.stocks,
   );
 
-  // 3. GET TRADING STATE (For loading spinner on buttons)
   const { loading: tradeLoading, error: tradeError } = useAppSelector(
     (state) => state.trading
   );
@@ -66,75 +68,124 @@ export default function StockPage() {
   const [selectedInterval, setSelectedInterval] = useState("1D");
   const [tradeQty, setTradeQty] = useState("1");
 
-  // Initial Data Load
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // --- DATA FETCHING ---
   useEffect(() => {
     if (!stockSymbol) return;
 
-    const loadData = async () => {
-      const result = await dispatch(fetchStockDetails(stockSymbol));
+    const fetchData = async () => {
+      console.log("🔄 Fetching data for", stockSymbol, "interval:", selectedInterval);
+      setIsChartLoading(true); 
       
-      if (fetchStockDetails.rejected.match(result)) {
-        router.push("/?error=stock_not_found");
-      } else {
-        dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
+      try {
+        if (!selectedStock || selectedStock.symbol !== stockSymbol) {
+          const result = await dispatch(fetchStockDetails(stockSymbol));
+          if (fetchStockDetails.rejected.match(result)) {
+            router.push("/?error=stock_not_found");
+            return;
+          }
+        }
+        
+        // Fetch historical data
+        await dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
+        
+        console.log("✅ Data fetched successfully");
+      } catch (err) {
+        console.error("❌ Failed to load stock data", err);
+      } finally {
+        setIsChartLoading(false);
       }
     };
 
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stockSymbol, router, dispatch]);
-
-  // Interval Switcher Listener
-  useEffect(() => {
-    if (stockSymbol) {
-      dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
-    }
-  }, [dispatch, stockSymbol, selectedInterval]);
+    fetchData();
+  }, [stockSymbol, selectedInterval, dispatch, router]); 
 
   // --- TRADING LOGIC ---
   const handleTrade = async (type: "BUY" | "SELL") => {
     const quantity = parseInt(tradeQty);
-    
     if (!stockSymbol || isNaN(quantity) || quantity <= 0) return;
 
-    const payload = {
-      symbol: stockSymbol,
-      quantity: quantity,
-    };
+    const payload = { symbol: stockSymbol, quantity };
 
     try {
       const action = type === "BUY" ? executeBuyTrade : executeSellTrade;
       const result = await dispatch(action(payload));
-
+      
       if (action.fulfilled.match(result)) {
-        // Optional: Reset qty or show success toast here
-        console.log(`${type} Successful`, result.payload);
-        // If you have a toast library: toast.success(`${type} Successful!`);
-      } else {
-        console.error(`${type} Failed`, result.payload);
-        // If you have a toast library: toast.error(result.payload as string);
+        console.log(`${type} Successful`);
       }
     } catch (error) {
-      console.error("Unexpected error", error);
+      console.error("Trade error", error);
     }
   };
 
-  // --- CHART DATA TRANSFORMATION ---
+  // CRITICAL FIX: Separate historical data from live price
   const chartData = useMemo(() => {
     const history = stockHistory[stockSymbol]?.[selectedInterval];
+    
+    console.log("📊 Chart Data Recalculation", {
+      symbol: stockSymbol,
+      interval: selectedInterval,
+      historyLength: history?.length || 0,
+      selectedStockPrice: selectedStock?.price,
+    });
+    
+    // Safety check for empty data
+    if (!Array.isArray(history) || history.length === 0) {
+      console.warn("⚠️ No historical data available");
+      return [];
+    }
 
-    if (!Array.isArray(history) || history.length === 0) return [];
+    // START WITH A CLEAN COPY - DO NOT MUTATE ORIGINAL
+    const baseData = history.map(point => ({ ...point }));
+    
+    console.log("📈 Base historical data points:", baseData.length);
 
-    return history.map((point) => {
+    // For 1D view ONLY, append current live price as visual indicator
+    if (selectedInterval === "1D" && selectedStock?.price) {
+      const lastHistoricalPoint = baseData[baseData.length - 1];
+      const lastTime = new Date(lastHistoricalPoint.timestamp).getTime();
+      const now = Date.now();
+      const timeDiff = now - lastTime;
+
+      console.log("⏰ Time diff from last point:", Math.floor(timeDiff / 1000), "seconds");
+
+      // Only add live price if historical data is more than 1 minute old
+      if (timeDiff > 60000) {
+        console.log("➕ Adding live price point:", selectedStock.price);
+        baseData.push({
+          timestamp: new Date().toISOString(),
+          price: selectedStock.price
+        });
+      } else {
+        // Update the last point if it's recent
+        console.log("🔄 Updating last historical point with live price");
+        baseData[baseData.length - 1] = {
+          ...lastHistoricalPoint,
+          price: selectedStock.price
+        };
+      }
+    }
+
+    // Transform to chart format
+    const formatted = baseData.map((point) => {
       const date = new Date(point.timestamp);
       let label = "";
+
+      if (isNaN(date.getTime())) {
+        console.error("❌ Invalid timestamp:", point.timestamp);
+        return { name: "", value: point.price };
+      }
 
       if (selectedInterval === "1D") {
         label = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       } else if (selectedInterval === "1W" || selectedInterval === "1M") {
         label = date.toLocaleDateString([], { month: "short", day: "numeric" });
       } else {
-        label = date.toLocaleDateString([], { month: "short", day: "numeric", year: "2-digit" });
+        label = date.toLocaleDateString([], { month: "short", year: "2-digit" });
       }
 
       return {
@@ -143,25 +194,36 @@ export default function StockPage() {
         fullDate: date.toLocaleString(),
       };
     });
-  }, [stockHistory, stockSymbol, selectedInterval]);
 
-  // UI Derived Values
+    console.log("✅ Final chart data points:", formatted.length);
+    return formatted;
+    
+  }, [
+    // CRITICAL: Only these dependencies should trigger recalculation
+    stockHistory[stockSymbol]?.[selectedInterval], // Historical data for this specific symbol+interval
+    selectedInterval,
+    selectedInterval === "1D" ? selectedStock?.price : null, // Live price ONLY for 1D
+    stockSymbol
+  ]);
+
+  // Derived Values
   const currentPrice = selectedStock?.price || 0;
   const priceChangePercent = selectedStock?.changePercent || 0;
   const isPositive = priceChangePercent >= 0;
-  const lastUpdated = selectedStock?.lastUpdated
-    ? new Date(selectedStock.lastUpdated).toLocaleTimeString()
-    : "--:--";
+
+  const lastUpdated = useMemo(() => {
+    if (!mounted || !selectedStock?.lastUpdated) return "--:--";
+    return new Date(selectedStock.lastUpdated).toLocaleTimeString();
+  }, [selectedStock?.lastUpdated, mounted]);
 
   const intervals = ["1D", "1W", "1M", "3M", "1Y"];
 
   // Cost Calculations
   const estimatedCost = Number(tradeQty) * currentPrice;
-  const estimatedFee = estimatedCost * 0.001; // 0.1% fee
+  const estimatedFee = estimatedCost * 0.001; 
   const totalCost = estimatedCost + estimatedFee;
   const canAfford = cashBalance >= totalCost;
 
-  // Global Loading State (for page)
   if (stockLoading && !selectedStock) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
@@ -178,8 +240,7 @@ export default function StockPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background flex flex-col">
-        
-        {/* --- HEADER --- */}
+        {/* HEADER */}
         <header className="border-b bg-card px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm z-10">
           <div className="flex items-center gap-3 sm:gap-6">
             <DropdownMenu>
@@ -238,13 +299,15 @@ export default function StockPage() {
 
             <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
-            {/* Wallet Display - Hidden on small screens, shown on md+ */}
             <div className="hidden md:flex flex-col items-end text-right px-2 min-w-[100px]">
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
                 <Wallet className="w-3 h-3" /> Balance
               </span>
               <span className="font-mono text-sm font-semibold text-primary">
-                ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {mounted 
+                  ? `$${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : "$0.00"
+                }
               </span>
             </div>
 
@@ -257,10 +320,10 @@ export default function StockPage() {
           </div>
         </header>
 
-        {/* --- MAIN CONTENT --- */}
+        {/* --- CONTENT --- */}
         <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
           
-          {/* LEFT: CHART */}
+          {/* CHART AREA */}
           <div className="flex-1 p-3 sm:p-4 md:p-6 overflow-hidden bg-gradient-to-b from-background to-muted/20 min-h-[300px] lg:min-h-0">
             <Card className="h-full border shadow-sm bg-card/50 backdrop-blur-sm flex flex-col">
               <CardContent className="p-3 sm:p-6 h-full flex flex-col">
@@ -271,15 +334,21 @@ export default function StockPage() {
                       {selectedStock?.name} • {selectedInterval} View
                     </p>
                   </div>
+                  {isChartLoading && (
+                     <Badge variant="secondary" className="animate-pulse">Fetching Data...</Badge>
+                  )}
                 </div>
                 
                 <div className="flex-1 min-h-0 w-full relative">
-                  {stockLoading && chartData.length === 0 ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  {isChartLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 backdrop-blur-[1px]">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
                     </div>
                   ) : chartData.length > 0 ? (
                     <AreaChartComponent 
+                      key={`${stockSymbol}-${selectedInterval}`}
                       data={chartData} 
                       dataKey="value" 
                       name="Price"
@@ -290,6 +359,9 @@ export default function StockPage() {
                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3 border-2 border-dashed rounded-xl border-muted/50">
                       <AlertCircle className="h-8 w-8 opacity-20" />
                       <p className="text-sm">No data available for {selectedInterval}</p>
+                      <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                        <RefreshCcw className="mr-2 h-3 w-3" /> Retry
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -297,9 +369,8 @@ export default function StockPage() {
             </Card>
           </div>
 
-          {/* RIGHT: TRADING SIDEBAR */}
+          {/* TRADING SIDEBAR */}
           <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l bg-card flex flex-col lg:h-full shadow-xl z-20">
-            {/* Header */}
             <div className="p-4 sm:p-6 xl:p-8 border-b bg-muted/10">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">About Asset</span>
               <h2 className="text-2xl xl:text-3xl font-black mt-2 tracking-tight line-clamp-1" title={selectedStock?.name}>
@@ -314,14 +385,12 @@ export default function StockPage() {
               </div>
             </div>
 
-            {/* Form */}
             <div className="flex-1 p-4 sm:p-6 xl:p-8 space-y-4 sm:space-y-6 overflow-y-auto">
-              
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</Label>
                   <span className={`text-[10px] font-mono ${!canAfford ? "text-red-500" : "text-muted-foreground"}`}>
-                    Avail: ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    Avail: {mounted ? `$${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "-"}
                   </span>
                 </div>
                 <div className="relative group">
@@ -340,7 +409,6 @@ export default function StockPage() {
                 </div>
               </div>
 
-              {/* Cost Breakdown */}
               <div className="p-5 rounded-xl bg-muted/40 border border-border/50 space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Price per share</span>
@@ -364,7 +432,6 @@ export default function StockPage() {
                     )}
                   </div>
                 </div>
-                {/* Error Message Display */}
                 {tradeError && (
                    <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded border border-red-500/20 mt-2">
                      {tradeError}
@@ -372,7 +439,6 @@ export default function StockPage() {
                 )}
               </div>
 
-              {/* Action Buttons */}
               <div className="grid gap-3 pt-4">
                 <Button 
                   size="lg" 

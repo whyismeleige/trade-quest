@@ -33,16 +33,17 @@ import {
 } from "@/components/charts"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { fetchPortfolio } from "@/store/slices/portfolio.slice"
-import { fetchTradeHistory } from "@/store/slices/trading.slice" // Import trade action
+import { fetchTradeHistory } from "@/store/slices/trading.slice" 
 import { useMarketStream } from "@/hooks/useMarketStream"
 
 export default function PortfolioPage() {
   const dispatch = useAppDispatch();
+  
+  // 1. Add Mounted State
+  const [mounted, setMounted] = useState(false);
 
   useMarketStream();
 
-  // --- Redux State ---
-  // 1. Portfolio State
   const { 
     holdings, 
     totalValue, 
@@ -50,7 +51,6 @@ export default function PortfolioPage() {
     loading: portfolioLoading 
   } = useAppSelector((state) => state.portfolio);
 
-  // 2. Trading History State (Renaming loading to avoid conflict)
   const { 
     trades, 
     loading: historyLoading, 
@@ -58,19 +58,18 @@ export default function PortfolioPage() {
     currentPage 
   } = useAppSelector((state) => state.trading);
 
-  // --- Local State ---
   const [historyPage, setHistoryPage] = useState(1);
 
-  // --- Effects ---
+  // 2. Set Mounted to true after initial render
   useEffect(() => {
-    // Fetch Portfolio Data
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     dispatch(fetchPortfolio());
-    
-    // Fetch Trade History Data (Initial load)
     dispatch(fetchTradeHistory({ page: historyPage, limit: 5 }));
   }, [dispatch, historyPage]);
 
-  // --- Derived Metrics ---
   const { totalProfitLoss, totalProfitLossPercent } = useMemo(() => {
     const cost = holdings.reduce((sum, h) => sum + (h.averagePrice * h.quantity), 0);
     const pnl = holdings.reduce((sum, h) => sum + h.profitLoss, 0);
@@ -78,20 +77,17 @@ export default function PortfolioPage() {
     return { totalProfitLoss: pnl, totalProfitLossPercent: pnlPercent };
   }, [holdings]);
 
-  // Transform holdings for Allocation Chart
   const allocationData = useMemo(() => [
     { name: "Stocks", value: Math.max(0, totalValue - cashBalance), color: "var(--primary)" },
     { name: "Cash", value: cashBalance, color: "var(--secondary)" },
   ], [totalValue, cashBalance]);
 
-  // --- Handlers ---
   const handleHistoryPageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setHistoryPage(newPage);
     }
   };
 
-  // Helper for pagination button state
   const isFirstPage = currentPage === 1;
   const isLastPage = currentPage === totalPages;
 
@@ -103,6 +99,10 @@ export default function PortfolioPage() {
       </div>
     );
   }
+
+  // Helper to safely format currency during hydration
+  const formatCurrency = (val: number) => 
+    mounted ? val.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00";
 
   return (
     <div className="space-y-6">
@@ -131,13 +131,22 @@ export default function PortfolioPage() {
               <div className="rounded-full bg-primary/10 p-2">
                 <Briefcase className="h-5 w-5 text-primary" />
               </div>
+              {/* 3. Fix Badge Hydration: Only show calculated percent when mounted */}
               <Badge variant={totalProfitLoss >= 0 ? "default" : "destructive"}>
-                {totalProfitLoss >= 0 ? "+" : ""}{totalProfitLossPercent.toFixed(2)}%
+                {mounted ? (
+                  <>
+                    {totalProfitLoss >= 0 ? "+" : ""}{totalProfitLossPercent.toFixed(2)}%
+                  </>
+                ) : (
+                  "0.00%" // Server safe default
+                )}
               </Badge>
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Total Portfolio Value</p>
-              <p className="text-2xl font-bold">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold">
+                ${formatCurrency(totalValue)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -152,7 +161,9 @@ export default function PortfolioPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Cash Balance</p>
-              <p className="text-2xl font-bold">${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold">
+                ${formatCurrency(cashBalance)}
+              </p>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Available for trading</p>
           </CardContent>
@@ -168,8 +179,15 @@ export default function PortfolioPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Total P&L</p>
+              {/* 4. Fix P&L Hydration */}
               <p className={`text-2xl font-bold ${totalProfitLoss >= 0 ? "text-accent" : "text-primary"}`}>
-                {totalProfitLoss >= 0 ? "+" : ""}${totalProfitLoss.toFixed(2)}
+                {mounted ? (
+                  <>
+                    {totalProfitLoss >= 0 ? "+" : ""}${totalProfitLoss.toFixed(2)}
+                  </>
+                ) : (
+                  "$0.00"
+                )}
               </p>
             </div>
           </CardContent>
@@ -185,7 +203,7 @@ export default function PortfolioPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Active Holdings</p>
-              <p className="text-2xl font-bold">{holdings.length}</p>
+              <p className="text-2xl font-bold">{mounted ? holdings.length : 0}</p>
             </div>
           </CardContent>
         </Card>
@@ -218,7 +236,7 @@ export default function PortfolioPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {holdings.map((holding) => (
+                    {mounted && holdings.map((holding) => (
                       <TableRow key={holding.symbol}>
                         <TableCell>
                           <div>
@@ -234,10 +252,17 @@ export default function PortfolioPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {holdings.length === 0 && (
+                    {mounted && holdings.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                           No active holdings. Start trading to build your portfolio.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {!mounted && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                          Loading holdings...
                         </TableCell>
                       </TableRow>
                     )}
@@ -259,7 +284,9 @@ export default function PortfolioPage() {
                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                         <span>{item.name}</span>
                       </div>
-                      <span className="font-bold">${item.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      <span className="font-bold">
+                        ${mounted ? item.value.toLocaleString(undefined, { maximumFractionDigits: 0 }) : "0"}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -287,7 +314,7 @@ export default function PortfolioPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historyLoading ? (
+                  {historyLoading || !mounted ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center">
                         <div className="flex justify-center items-center gap-2">
@@ -309,6 +336,7 @@ export default function PortfolioPage() {
                       <TableRow key={trade._id}>
                         <TableCell>
                           <div className="flex flex-col">
+                            {/* 5. Date Hydration Fix: Only render dates when mounted */}
                             <span className="font-medium">{new Date(trade.executedAt).toLocaleDateString()}</span>
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="h-3 w-3" />
@@ -334,8 +362,7 @@ export default function PortfolioPage() {
                 </TableBody>
               </Table>
 
-              {/* Simple Pagination for History Tab */}
-              {!historyLoading && trades.length > 0 && (
+              {!historyLoading && mounted && trades.length > 0 && (
                 <div className="flex items-center justify-end space-x-2 py-4">
                   <Button
                     variant="outline"
