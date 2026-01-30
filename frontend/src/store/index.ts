@@ -8,6 +8,7 @@ import portfolioReducer from "./slices/portfolio.slice";
 import tradingReducer from "./slices/trading.slice";
 import stocksReducer from "./slices/stocks.slice";
 import leaguesReducer from "./slices/leagues.slice";
+import achievementReducer from "./slices/achievement.slice";
 
 // ==================== PERSIST CONFIGURATIONS ====================
 
@@ -45,8 +46,14 @@ const stocksPersistConfig = {
 // ==================== PERSISTED REDUCERS ====================
 
 const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
-const persistedPortfolioReducer = persistReducer(portfolioPersistConfig, portfolioReducer);
-const persistedStocksReducer = persistReducer(stocksPersistConfig, stocksReducer);
+const persistedPortfolioReducer = persistReducer(
+  portfolioPersistConfig,
+  portfolioReducer,
+);
+const persistedStocksReducer = persistReducer(
+  stocksPersistConfig,
+  stocksReducer,
+);
 
 // ==================== ROOT REDUCER ====================
 
@@ -56,6 +63,7 @@ const rootReducer = combineReducers({
   trading: tradingReducer, // Not persisted
   stocks: persistedStocksReducer,
   leagues: leaguesReducer, // Not persisted
+  achievements: achievementReducer,
 });
 
 // ==================== STORE CONFIGURATION ====================

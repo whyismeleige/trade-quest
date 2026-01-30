@@ -17,7 +17,7 @@ export interface PricePoint {
 }
 
 export interface StockDetail {
-  id: string; // Backend uses "id" here, but "_id" in search
+  id: string; 
   symbol: string;
   name: string;
   sector: string;
@@ -26,10 +26,20 @@ export interface StockDetail {
   change: number;
   changePercent: number;
   lastUpdated: string;
-  history?: PricePoint[]; // Included in /api/stocks/:symbol
+  history?: PricePoint[]; 
 }
 
-// Response Wrappers
+// ==================== SOCKET PAYLOADS ====================
+// ⚡ NEW: The shape of data emitted by "market-update"
+export interface LivePriceUpdate {
+  _id: string;
+  symbol: string;
+  price: number;
+  change: number; // The absolute change value sent by simulator
+  timestamp?: string;
+}
+
+// ==================== RESPONSE WRAPPERS ====================
 export interface SearchResponse extends ApiResponse {
   success: boolean;
   count: number;

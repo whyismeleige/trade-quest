@@ -38,11 +38,14 @@ import {
   executeBuyTrade, 
   executeSellTrade 
 } from "@/store/slices/trading.slice";
+import { useMarketStream } from "@/hooks/useMarketStream";
 
 export default function StockPage() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
+
+  useMarketStream();
 
   // 1. Handle Route Params
   const rawId = params.stockid || params.id;

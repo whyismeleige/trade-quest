@@ -21,11 +21,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useMarketStream } from "@/hooks/useMarketStream";
 
 export default function MarketplacePage() {
   const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  useMarketStream();
 
   // Get data from Redux
   const { searchResults, searchLoading, watchlist } = useAppSelector(

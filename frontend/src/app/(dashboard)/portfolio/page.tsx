@@ -34,9 +34,12 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { fetchPortfolio } from "@/store/slices/portfolio.slice"
 import { fetchTradeHistory } from "@/store/slices/trading.slice" // Import trade action
+import { useMarketStream } from "@/hooks/useMarketStream"
 
 export default function PortfolioPage() {
   const dispatch = useAppDispatch();
+
+  useMarketStream();
 
   // --- Redux State ---
   // 1. Portfolio State

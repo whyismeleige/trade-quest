@@ -1,10 +1,15 @@
+import {
+  ActiveLeaguesResponse,
+  LeaderboardResponse,
+} from "@/types/league.types";
 import { apiClient } from "./api-client";
-import { LeaguesResponse, LeaderboardResponse } from "@/types/league.types";
 
 export const leaguesApi = {
-  getActiveLeagues: () => 
-    apiClient.get<LeaguesResponse>("/api/leagues/active"),
+  // Get all active leagues (Daily, Weekly, Monthly)
+  getActiveLeagues: () =>
+    apiClient.get<ActiveLeaguesResponse>("/api/leagues/active"),
 
-  getLeaderboard: (leagueId: string) => 
+  // Get specific leaderboard data
+  getLeaderboard: (leagueId: string) =>
     apiClient.get<LeaderboardResponse>(`/api/leagues/${leagueId}/leaderboard`),
 };

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { stocksApi } from "@/lib/api/stocks.api";
 import { StocksState } from "@/types/redux.types";
+import { LivePriceUpdate } from "@/types/stock.types";
 
 const initialState: StocksState = {
   searchResults: [],
@@ -33,20 +34,27 @@ export const fetchStockDetails = createAsyncThunk(
       // Returns StockDetailResponse
       return await stocksApi.getDetails(symbol);
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch details");
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch details"
+      );
     }
   }
 );
 
 export const fetchStockHistory = createAsyncThunk(
   "stocks/history",
-  async ({ symbol, range }: { symbol: string; range: string }, { rejectWithValue }) => {
+  async (
+    { symbol, range }: { symbol: string; range: string },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await stocksApi.getHistory(symbol, range);
       // response is HistoryResponse, we want to return the data array specifically
       return { symbol, range, points: response.data };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch history");
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch history"
+      );
     }
   }
 );
@@ -68,15 +76,51 @@ const stocksSlice = createSlice({
     clearSearchResults: (state) => {
       state.searchResults = [];
     },
-    updateStockPrice: (state, action: PayloadAction<{ symbol: string; price: number }>) => {
-      const { symbol, price } = action.payload;
-      
-      const searchItem = state.searchResults.find((s) => s.symbol === symbol);
-      if (searchItem) searchItem.currentPrice = price;
-      
-      if (state.selectedStock && state.selectedStock.symbol === symbol) {
-        state.selectedStock.price = price;
-      }
+    
+    // ⚡ UPDATED: Handles bulk updates from Socket
+    updateLivePrices: (state, action: PayloadAction<LivePriceUpdate[]>) => {
+      const updates = action.payload;
+
+      updates.forEach((update) => {
+        // 1. Update Search Results / List View
+        const listItem = state.searchResults.find((s) => s.symbol === update.symbol);
+        if (listItem) {
+          listItem.currentPrice = update.price;
+          // Recalculate stats for the UI
+          if (listItem.previousClosePrice) {
+            const diff = update.price - listItem.previousClosePrice;
+            listItem.change = diff;
+            listItem.changePercent = (diff / listItem.previousClosePrice) * 100;
+          }
+        }
+
+        // 2. Update Selected Stock (Detail View)
+        if (state.selectedStock && state.selectedStock.symbol === update.symbol) {
+          state.selectedStock.price = update.price;
+          state.selectedStock.lastUpdated = new Date().toISOString();
+
+          if (state.selectedStock.previousClose) {
+            const diff = update.price - state.selectedStock.previousClose;
+            state.selectedStock.change = diff;
+            state.selectedStock.changePercent =
+              (diff / state.selectedStock.previousClose) * 100;
+          }
+
+          // 3. Update History Graph (Adds real-time feel to chart)
+          // We only update "1D" history live
+          if (state.stockHistory[update.symbol]) {
+            const historyArr = state.stockHistory[update.symbol]["1D"];
+            if (historyArr) {
+              historyArr.push({
+                price: update.price,
+                timestamp: new Date().toISOString(),
+              });
+              // Keep frontend array small to prevent memory leaks/performance issues
+              if (historyArr.length > 500) historyArr.shift();
+            }
+          }
+        }
+      });
     },
   },
   extraReducers: (builder) => {
@@ -88,7 +132,7 @@ const stocksSlice = createSlice({
       })
       .addCase(searchStocks.fulfilled, (state, action) => {
         state.searchLoading = false;
-        state.searchResults = action.payload.data; // action.payload is SearchResponse
+        state.searchResults = action.payload.data;
       })
       .addCase(searchStocks.rejected, (state, action) => {
         state.searchLoading = false;
@@ -100,7 +144,7 @@ const stocksSlice = createSlice({
       })
       .addCase(fetchStockDetails.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedStock = action.payload.data; // action.payload is StockDetailResponse
+        state.selectedStock = action.payload.data;
       })
       // History
       .addCase(fetchStockHistory.fulfilled, (state, action) => {
@@ -113,11 +157,11 @@ const stocksSlice = createSlice({
   },
 });
 
-export const { 
-  addToWatchlist, 
-  removeFromWatchlist, 
-  clearSearchResults, 
-  updateStockPrice 
+export const {
+  addToWatchlist,
+  removeFromWatchlist,
+  clearSearchResults,
+  updateLivePrices,
 } = stocksSlice.actions;
 
 export default stocksSlice.reducer;
