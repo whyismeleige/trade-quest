@@ -11,9 +11,12 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useMounted } from "@/hooks/useMounted";
 import { useAppDispatch } from "@/store/hooks";
 import { loginUser, registerUser } from "@/store/slices/auth.slice";
-import { Briefcase, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -157,6 +160,13 @@ function AuthPage() {
     }
   };
 
+  const { resolvedTheme } = useTheme();
+  const mounted = useMounted();
+
+  const logoSrc = mounted 
+    ? (resolvedTheme === "dark" ? "/favicon-dark.svg" : "/favicon-light.svg")
+    : "/favicon-light.svg";
+
   // Reset form when switching views
   const handleToggleView = () => {
     const newView = view === "login" ? "signup" : "login";
@@ -175,9 +185,13 @@ function AuthPage() {
               href="/"
               className="flex flex-col items-center gap-2 font-medium"
             >
-              <div className="flex size-10 items-center justify-center rounded-md bg-primary">
-                <Briefcase className="size-6 text-primary-foreground" />
-              </div>
+              <Image
+                src={logoSrc}
+                alt="TradeQuest Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10"
+              />
               <span className="sr-only">Trade-Quest</span>
             </Link>
             <h1 className="text-xl font-bold">Welcome to Trade-Quest</h1>

@@ -6,6 +6,18 @@ import { Toaster } from "react-hot-toast";
 export const metadata: Metadata = {
   title: "Trade Quest",
   description: "Gamified Trade Quest Platform",
+  icons: {
+    icon: [
+      {
+        url: "/favicon-light.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-dark.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

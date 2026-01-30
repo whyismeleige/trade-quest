@@ -2,7 +2,9 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,11 +18,9 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Bell,
-  Search,
   Zap,
   Target,
   Users,
@@ -28,6 +28,7 @@ import {
   BookOpen,
   Medal,
   Store,
+  LogOut,
 } from "lucide-react"
 import {
   Tooltip,
@@ -44,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { useMounted } from "@/hooks/useMounted"
 
 interface NavItem {
   title: string
@@ -76,7 +78,7 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: "Leaderboard",
-    href: "/dashboard/leaderboard",
+    href: "/leaderboard",
     icon: <Trophy className="h-5 w-5" />,
     badge: "Live",
   },
@@ -87,7 +89,7 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: "Trade History",
-    href: "/dashboard/history",
+    href: "/tradehistory",
     icon: <History className="h-5 w-5" />,
   },
 ]
@@ -136,6 +138,12 @@ export default function DashboardLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const { resolvedTheme } = useTheme()
+  const mounted = useMounted()
+
+  const logoSrc = mounted 
+    ? (resolvedTheme === "dark" ? "/favicon-dark.svg" : "/favicon-light.svg")
+    : "/favicon-light.svg"
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -143,7 +151,7 @@ export default function DashboardLayout({
         {/* Sidebar */}
         <aside
           className={cn(
-            "flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
+            "hidden md:flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
             collapsed ? "w-[70px]" : "w-[260px]"
           )}
         >
@@ -151,16 +159,26 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center justify-between border-b px-4">
             {!collapsed && (
               <Link href="/dashboard" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <TrendingUp className="h-5 w-5 text-primary-foreground" />
-                </div>
+                <Image
+                  src={logoSrc}
+                  alt="TradeQuest Logo"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
+                />
                 <span className="text-xl font-bold">TradeQuest</span>
               </Link>
             )}
             {collapsed && (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary mx-auto">
-                <TrendingUp className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <Link href="/dashboard" className="mx-auto">
+                <Image
+                  src={logoSrc}
+                  alt="TradeQuest Logo"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
+                />
+              </Link>
             )}
           </div>
 
@@ -260,21 +278,7 @@ export default function DashboardLayout({
         {/* Main Content */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Top Header */}
-          <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search stocks, users, or commands..."
-                  className="h-10 w-[300px] rounded-lg border bg-background pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border bg-muted px-1.5 text-[10px] text-muted-foreground">
-                  ⌘K
-                </kbd>
-              </div>
-            </div>
-
+          <header className="flex h-16 items-center justify-end border-b bg-card px-6">
             <div className="flex items-center gap-3">
               {/* Real-time Market Status */}
               <div className="flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 py-1.5">
