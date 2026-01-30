@@ -173,7 +173,31 @@ export default function DashboardLayout({
                   />
                 </Link>
               )}
+              {!collapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCollapsed(true)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Expand Button when collapsed */}
+          {collapsed && (
+            <div className="flex justify-center py-2 border-b">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCollapsed(false)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
+          )}
 
             {/* Main Navigation */}
             <div className="flex-1 overflow-y-auto py-4">
