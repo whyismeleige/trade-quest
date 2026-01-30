@@ -2,7 +2,9 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,11 +18,9 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Bell,
-  Search,
   Zap,
   Target,
   Users,
@@ -28,6 +28,7 @@ import {
   BookOpen,
   Medal,
   Store,
+  LogOut,
 } from "lucide-react"
 import {
   Tooltip,
@@ -47,6 +48,7 @@ import { Badge } from "@/components/ui/badge"
 import ProtectedRoute from "@/components/routes/ProtectedRoute"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { logoutUser } from "@/store/slices/auth.slice"
+import { useMounted } from "@/hooks/useMounted"
 
 interface NavItem {
   title: string
@@ -73,18 +75,13 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: "Leaderboard",
-    href: "/dashboard/leaderboard",
+    href: "/leaderboard",
     icon: <Trophy className="h-5 w-5" />,
     badge: "Live",
   },
   {
-    title: "Analytics (Coming Soon)",
-    href: "/dashboard/analytics",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
     title: "Trade History",
-    href: "/dashboard/history",
+    href: "/tradehistory",
     icon: <History className="h-5 w-5" />,
   },
 ]
@@ -92,23 +89,23 @@ const mainNavItems: NavItem[] = [
 const secondaryNavItems: NavItem[] = [
   {
     title: "Achievements",
-    href: "/dashboard/achievements",
+    href: "/achievements",
     icon: <Medal className="h-5 w-5" />,
     badge: "3 New",
   },
   {
     title: "Challenges",
-    href: "/dashboard/challenges",
+    href: "/challenges",
     icon: <Target className="h-5 w-5" />,
   },
   {
     title: "Community",
-    href: "/dashboard/community",
+    href: "/community",
     icon: <Users className="h-5 w-5" />,
   },
   {
     title: "Learn",
-    href: "/dashboard/learn",
+    href: "/learn",
     icon: <BookOpen className="h-5 w-5" />,
   },
 ]
@@ -116,12 +113,12 @@ const secondaryNavItems: NavItem[] = [
 const bottomNavItems: NavItem[] = [
   {
     title: "Settings",
-    href: "/dashboard/settings",
+    href: "/settings",
     icon: <Settings className="h-5 w-5" />,
   },
   {
     title: "Help & Support",
-    href: "/dashboard/help",
+    href: "/help",
     icon: <HelpCircle className="h-5 w-5" />,
   },
 ]
@@ -139,6 +136,12 @@ export default function DashboardLayout({
   const handleLogout = () => {
     dispatch(logoutUser())
   }
+  const { resolvedTheme } = useTheme()
+  const mounted = useMounted()
+
+  const logoSrc = mounted 
+    ? (resolvedTheme === "dark" ? "/favicon-dark.svg" : "/favicon-light.svg")
+    : "/favicon-light.svg"
 
   return (
     <ProtectedRoute>
@@ -147,7 +150,7 @@ export default function DashboardLayout({
         {/* Sidebar */}
         <aside
           className={cn(
-            "flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
+            "hidden md:flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
             collapsed ? "w-[70px]" : "w-[260px]"
           )}
         >
@@ -155,16 +158,26 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center justify-between border-b px-4">
             {!collapsed && (
               <Link href="/dashboard" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <TrendingUp className="h-5 w-5 text-primary-foreground" />
-                </div>
+                <Image
+                  src={logoSrc}
+                  alt="TradeQuest Logo"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
+                />
                 <span className="text-xl font-bold">TradeQuest</span>
               </Link>
             )}
             {collapsed && (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary mx-auto">
-                <TrendingUp className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <Link href="/dashboard" className="mx-auto">
+                <Image
+                  src={logoSrc}
+                  alt="TradeQuest Logo"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
+                />
+              </Link>
             )}
           </div>
 
@@ -264,21 +277,7 @@ export default function DashboardLayout({
         {/* Main Content */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Top Header */}
-          <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search stocks, users, or commands..."
-                  className="h-10 w-[300px] rounded-lg border bg-background pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border bg-muted px-1.5 text-[10px] text-muted-foreground">
-                  ⌘K
-                </kbd>
-              </div>
-            </div>
-
+          <header className="flex h-16 items-center justify-end border-b bg-card px-6">
             <div className="flex items-center gap-3">
               {/* Real-time Market Status */}
               <div className="flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 py-1.5">
@@ -331,9 +330,15 @@ export default function DashboardLayout({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{user?.name || "User"}</p>
-                      <p className="text-xs text-muted-foreground">{user?.email || "user@email.com"}</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src="/avatars/user.png" alt="User" />
+                        <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{user?.name || "User"}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email || "user@email.com"}</p>
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -345,6 +350,7 @@ export default function DashboardLayout({
                     <HelpCircle className="mr-2 h-4 w-4" />
                     Help & Support
                   </DropdownMenuItem>
+                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
