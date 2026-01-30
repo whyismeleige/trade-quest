@@ -219,47 +219,48 @@ export default function PortfolioPage() {
         {/* --- HOLDINGS TAB --- */}
         <TabsContent value="holdings" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-2 overflow-hidden">
               <CardHeader>
                 <CardTitle>Current Holdings</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto">
-                <Table className="min-w-[600px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Asset</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right hidden sm:table-cell">Avg Price</TableHead>
-                      <TableHead className="text-right">Mkt Price</TableHead>
-                      <TableHead className="text-right hidden md:table-cell">Total Value</TableHead>
-                      <TableHead className="text-right">P&L</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mounted && holdings.map((holding) => (
-                      <TableRow key={holding.symbol}>
-                        <TableCell>
-                          <div>
-                            <p className="font-bold">{holding.symbol}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{holding.quantity}</TableCell>
-                        <TableCell className="text-right hidden sm:table-cell">${holding.averagePrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${holding.currentPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-medium hidden md:table-cell">${holding.currentValue.toLocaleString()}</TableCell>
-                        <TableCell className={`text-right font-bold ${holding.profitLoss >= 0 ? "text-accent" : "text-primary"}`}>
-                          {holding.profitLoss >= 0 ? "+" : ""}{holding.profitLoss.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {mounted && holdings.length === 0 && (
+              <CardContent className="p-0 sm:p-6">
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[500px]">
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                          No active holdings. Start trading to build your portfolio.
-                        </TableCell>
+                        <TableHead>Asset</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right hidden sm:table-cell">Avg Price</TableHead>
+                        <TableHead className="text-right">Mkt Price</TableHead>
+                        <TableHead className="text-right hidden md:table-cell">Total Value</TableHead>
+                        <TableHead className="text-right">P&L</TableHead>
                       </TableRow>
-                    )}
-                    {!mounted && (
+                    </TableHeader>
+                    <TableBody>
+                      {mounted && holdings.map((holding) => (
+                        <TableRow key={holding.symbol}>
+                          <TableCell>
+                            <div>
+                              <p className="font-bold">{holding.symbol}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">{holding.quantity}</TableCell>
+                          <TableCell className="text-right hidden sm:table-cell">${holding.averagePrice.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">${holding.currentPrice.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-medium hidden md:table-cell">${holding.currentValue.toLocaleString()}</TableCell>
+                          <TableCell className={`text-right font-bold ${holding.profitLoss >= 0 ? "text-accent" : "text-primary"}`}>
+                            {holding.profitLoss >= 0 ? "+" : ""}{holding.profitLoss.toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {mounted && holdings.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                            No active holdings. Start trading to build your portfolio.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {!mounted && (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                           Loading holdings...
@@ -267,16 +268,19 @@ export default function PortfolioPage() {
                       </TableRow>
                     )}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader>
                 <CardTitle>Asset Allocation</CardTitle>
               </CardHeader>
-              <CardContent>
-                <PieChartComponent data={allocationData} height={200} />
+              <CardContent className="p-3 sm:p-6">
+                <div className="w-full max-w-[250px] mx-auto">
+                  <PieChartComponent data={allocationData} height={180} />
+                </div>
                 <div className="mt-4 space-y-2">
                   {allocationData.map((item) => (
                     <div key={item.name} className="flex justify-between text-sm">
@@ -297,73 +301,82 @@ export default function PortfolioPage() {
         
         {/* --- TRADE HISTORY TAB --- */}
         <TabsContent value="history">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table className="min-w-[500px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right hidden sm:table-cell">Qty</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {historyLoading || !mounted ? (
+            <CardContent className="p-0 sm:p-6">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[450px]">
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
-                        <div className="flex justify-center items-center gap-2">
-                           <Loader2 className="h-4 w-4 animate-spin" /> Loading history...
-                        </div>
-                      </TableCell>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Symbol</TableHead>
+                      <TableHead className="hidden sm:table-cell">Type</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">Qty</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
-                  ) : trades.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <History className="h-8 w-8 opacity-20" />
-                          No trading history found.
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    trades.map((trade) => (
-                      <TableRow key={trade._id}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            {/* 5. Date Hydration Fix: Only render dates when mounted */}
-                            <span className="font-medium">{new Date(trade.executedAt).toLocaleDateString()}</span>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {new Date(trade.executedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+                  </TableHeader>
+                  <TableBody>
+                    {historyLoading || !mounted ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          <div className="flex justify-center items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Loading history...
                           </div>
                         </TableCell>
-                        <TableCell className="font-bold">{trade.symbol}</TableCell>
-                        <TableCell>
-                          <Badge variant={trade.type === "BUY" ? "default" : "destructive"}>
-                            {trade.type === "BUY" ? <ArrowUpRight className="mr-1 h-3 w-3" /> : <ArrowDownRight className="mr-1 h-3 w-3" />}
-                            {trade.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{trade.quantity}</TableCell>
-                        <TableCell className="text-right">${trade.price.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          ${trade.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </TableRow>
+                    ) : trades.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <History className="h-8 w-8 opacity-20" />
+                            No trading history found.
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      trades.map((trade) => (
+                        <TableRow key={trade._id}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              {/* 5. Date Hydration Fix: Only render dates when mounted */}
+                            <span className="font-medium text-xs sm:text-sm">{new Date(trade.executedAt).toLocaleDateString()}</span>
+                              <span className="text-xs text-muted-foreground sm:flex items-center gap-1 hidden">
+                                <Clock className="h-3 w-3" />
+                                {new Date(trade.executedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-bold">{trade.symbol}</span>
+                              <Badge variant={trade.type === "BUY" ? "default" : "destructive"} className="sm:hidden w-fit text-xs">
+                                {trade.type}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant={trade.type === "BUY" ? "default" : "destructive"}>
+                              {trade.type === "BUY" ? <ArrowUpRight className="mr-1 h-3 w-3" /> : <ArrowDownRight className="mr-1 h-3 w-3" />}
+                              {trade.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right hidden sm:table-cell">{trade.quantity}</TableCell>
+                          <TableCell className="text-right text-xs sm:text-sm">${trade.price.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-medium text-xs sm:text-sm">
+                            ${trade.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
               {!historyLoading && mounted && trades.length > 0 && (
-                <div className="flex items-center justify-end space-x-2 py-4">
+                <div className="flex items-center justify-center sm:justify-end gap-2 py-4 px-4 sm:px-0">
                   <Button
                     variant="outline"
                     size="sm"
@@ -371,10 +384,10 @@ export default function PortfolioPage() {
                     disabled={isFirstPage}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
                   </Button>
                   <div className="text-sm font-medium">
-                    Page {historyPage} of {totalPages}
+                    {historyPage} / {totalPages}
                   </div>
                   <Button
                     variant="outline"
@@ -382,7 +395,7 @@ export default function PortfolioPage() {
                     onClick={() => handleHistoryPageChange(historyPage + 1)}
                     disabled={isLastPage}
                   >
-                    Next
+                    <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>

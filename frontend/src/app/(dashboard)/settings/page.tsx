@@ -134,28 +134,30 @@ export default function SettingsPage() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="profile" className="gap-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="privacy" className="gap-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Privacy</span>
-          </TabsTrigger>
-          <TabsTrigger value="trading" className="gap-2">
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Trading</span>
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2">
-            <Palette className="h-4 w-4" />
-            <span className="hidden sm:inline">Appearance</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-max sm:w-auto sm:grid sm:grid-cols-5">
+            <TabsTrigger value="profile" className="gap-2 px-3 sm:px-4">
+              <User className="h-4 w-4" />
+              <span className="whitespace-nowrap">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2 px-3 sm:px-4">
+              <Bell className="h-4 w-4" />
+              <span className="whitespace-nowrap">Alerts</span>
+            </TabsTrigger>
+            <TabsTrigger value="privacy" className="gap-2 px-3 sm:px-4">
+              <Shield className="h-4 w-4" />
+              <span className="whitespace-nowrap">Privacy</span>
+            </TabsTrigger>
+            <TabsTrigger value="trading" className="gap-2 px-3 sm:px-4">
+              <TrendingUp className="h-4 w-4" />
+              <span className="whitespace-nowrap">Trading</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="gap-2 px-3 sm:px-4">
+              <Palette className="h-4 w-4" />
+              <span className="whitespace-nowrap">Theme</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
