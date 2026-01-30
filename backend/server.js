@@ -16,11 +16,6 @@ const io = intializeSocket(server);
 const PORT = process.env.PORT || 8080;
 
 const authRoutes = require("./routes/auth.routes");
-const fileRoutes = require("./routes/file.routes");
-const aiRoutes = require("./routes/gemini.routes");
-const emailRoutes = require("./routes/email.routes");
-const voiceRoutes = require("./routes/voice.routes");
-const notificationRoutes = require("./routes/notification.routes");
 
 app.set("io", io);
 
@@ -37,10 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 connectDB();
 
 app.use('/api/auth', authRoutes);
-app.use('/api/file', fileRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/email', emailRoutes);
-app.use('/api/voice', voiceRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({
