@@ -55,6 +55,7 @@ import {
  SheetTitle,
  SheetTrigger,
 } from "@/components/ui/sheet"
+import { useAppSelector } from "@/store/hooks"
 
 interface NavItem {
  title: string
@@ -139,7 +140,8 @@ export default function DashboardLayout({
  const pathname = usePathname()
  const { resolvedTheme } = useTheme()
  const mounted = useMounted()
-
+  
+ const {user} = useAppSelector((state) => state.auth);
  const logoSrc = mounted
    ? (resolvedTheme === "dark" ? "/favicon-dark.svg" : "/favicon-light.svg")
    : "/favicon-light.svg"
@@ -223,7 +225,7 @@ export default function DashboardLayout({
                <div className="border-t p-4">
                  <div className="flex items-center gap-3">
                    <Avatar className="h-10 w-10">
-                     <AvatarImage src="/avatars/user.png" alt="User" />
+                     <AvatarImage src={user?.avatar} alt="User" />
                      <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                    </Avatar>
                    <div className="flex-1 min-w-0">
@@ -279,7 +281,7 @@ export default function DashboardLayout({
              <DropdownMenuTrigger asChild>
                <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                  <Avatar className="h-9 w-9">
-                   <AvatarImage src="/avatars/user.png" alt="User" />
+                   <AvatarImage src={user?.avatar} alt="User" />
                    <AvatarFallback className="bg-primary/10 text-primary text-sm">PJ</AvatarFallback>
                  </Avatar>
                </Button>
@@ -288,7 +290,7 @@ export default function DashboardLayout({
                <DropdownMenuLabel>
                  <div className="flex items-center gap-3">
                    <Avatar className="h-10 w-10">
-                     <AvatarImage src="/avatars/user.png" alt="User" />
+                     <AvatarImage src={user?.avatar} alt="User" />
                      <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                    </Avatar>
                    <div className="flex flex-col space-y-1">
@@ -429,7 +431,7 @@ export default function DashboardLayout({
            {!collapsed ? (
              <div className="flex items-center gap-3">
                <Avatar className="h-10 w-10">
-                 <AvatarImage src="/avatars/user.png" alt="User" />
+                 <AvatarImage src={user?.avatar} alt="User" />
                  <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                </Avatar>
                <div className="flex-1 min-w-0">
@@ -443,7 +445,7 @@ export default function DashboardLayout({
            ) : (
              <div className="flex flex-col items-center">
                <Avatar className="h-10 w-10">
-                 <AvatarImage src="/avatars/user.png" alt="User" />
+                 <AvatarImage src={user?.avatar} alt="User" />
                  <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                </Avatar>
              </div>
@@ -500,7 +502,7 @@ export default function DashboardLayout({
                <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                    <Avatar className="h-9 w-9">
-                     <AvatarImage src="/avatars/user.png" alt="User" />
+                     <AvatarImage src={user?.avatar} alt="User" />
                      <AvatarFallback className="bg-primary/10 text-primary text-sm">PJ</AvatarFallback>
                    </Avatar>
                  </Button>
@@ -509,7 +511,7 @@ export default function DashboardLayout({
                  <DropdownMenuLabel>
                    <div className="flex items-center gap-3">
                      <Avatar className="h-10 w-10">
-                       <AvatarImage src="/avatars/user.png" alt="User" />
+                       <AvatarImage src={user?.avatar} alt="User" />
                        <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
                      </Avatar>
                      <div className="flex flex-col space-y-1">
