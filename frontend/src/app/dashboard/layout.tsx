@@ -27,6 +27,7 @@ import {
   History,
   BookOpen,
   Medal,
+  Store,
 } from "lucide-react"
 import {
   Tooltip,
@@ -59,8 +60,14 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: "Trading",
-    href: "/dashboard/trading",
+    href: "/stock",
     icon: <TrendingUp className="h-5 w-5" />,
+  },
+  {
+    title: "Marketplace",
+    href: "/marketplace",
+    icon: <Store className="h-5 w-5" />,
+    badge: "New",
   },
   {
     title: "Portfolio",
@@ -216,7 +223,7 @@ export default function DashboardLayout({
                   <AvatarFallback className="bg-primary/10 text-primary">JD</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">John Doe</p>
+                  <p className="text-sm font-semibold truncate">Piyush</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Zap className="h-3 w-3 text-yellow-500" />
                     Level 12 • 2,450 XP
@@ -321,8 +328,8 @@ export default function DashboardLayout({
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">John Doe</p>
-                      <p className="text-xs text-muted-foreground">john@example.com</p>
+                      <p className="text-sm font-medium">Piyush</p>
+                      <p className="text-xs text-muted-foreground">piyush@example.com</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
