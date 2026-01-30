@@ -7,28 +7,22 @@ import {
   TrendingUp,
   Wallet,
   Flame,
-  Users,
   BarChart3,
   Search,
-  Filter,
   Lock,
   Unlock,
-  Star,
   Zap,
   Clock,
-  ChevronRight,
   Sparkles,
   Gift,
   Eye,
   EyeOff,
-  Share2,
   Crown,
 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -43,7 +37,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
 // Types
@@ -173,7 +166,7 @@ export default function AchievementsPage() {
 
   // Filter and sort achievements
   const filteredAchievements = useMemo(() => {
-    let filtered = achievements.filter(achievement => {
+    const filtered = achievements.filter(achievement => {
       // Search filter
       const matchesSearch = achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         achievement.description.toLowerCase().includes(searchQuery.toLowerCase())

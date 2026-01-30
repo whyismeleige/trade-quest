@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
@@ -29,18 +27,12 @@ import {
   BarChart3,
   Trophy,
   Flame,
-  Star,
   Users,
-  Clock,
-  ThumbsUp,
   Eye,
   Filter,
   Sparkles,
-  Crown,
-  Medal,
   Zap,
   Hash,
-  AtSign,
   Link2,
   Flag,
   UserPlus,
@@ -48,7 +40,6 @@ import {
   Bell,
   MessageSquare,
   Repeat2,
-  ChevronUp,
   ArrowUp,
   Target,
 } from "lucide-react"
@@ -574,7 +565,7 @@ export default function CommunityPage() {
                 <Trophy className="h-5 w-5 text-yellow-500" />
                 Top Traders
               </CardTitle>
-              <CardDescription>This week's best performers</CardDescription>
+              <CardDescription>This week&apos;s best performers</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {topTraders.map((trader, index) => (

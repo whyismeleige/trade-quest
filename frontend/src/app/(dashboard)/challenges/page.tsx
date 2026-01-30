@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
   Zap,
@@ -19,27 +18,18 @@ import {
   Gift,
   Calendar,
   CheckCircle2,
-  Lock,
   Sparkles,
   Coins,
-  ArrowRight,
   Timer,
-  RotateCcw,
   Rocket,
   Brain,
   Shield,
   Swords,
   Crown,
   Gem,
-  Medal,
-  ChevronRight,
   PlayCircle,
-  Percent,
   BarChart3,
-  DollarSign,
   CircleDollarSign,
-  TrendingDown,
-  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -463,7 +453,6 @@ export default function ChallengesPage() {
     .filter((c) => c.isCompleted || claimedChallenges.includes(c.id))
     .reduce((acc, c) => acc + c.xpReward, 0)
 
-  const totalWeeklyXP = weeklyChallenges.reduce((acc, c) => acc + c.xpReward, 0)
   const completedWeekly = weeklyChallenges.filter((c) => c.progress >= c.maxProgress).length
 
   return (
@@ -490,7 +479,7 @@ export default function ChallengesPage() {
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-yellow-500" />
               <div>
-                <p className="text-xs text-muted-foreground">Today's XP</p>
+                <p className="text-xs text-muted-foreground">Today&apos;s XP</p>
                 <p className="text-lg font-bold">+450 XP</p>
               </div>
             </div>
@@ -610,7 +599,7 @@ export default function ChallengesPage() {
                 <div>
                   <h3 className="text-lg font-semibold">Limited Time Events</h3>
                   <p className="text-sm text-muted-foreground">
-                    Special challenges with exclusive rewards. Don't miss out!
+                    Special challenges with exclusive rewards. Don&apos;t miss out!
                   </p>
                 </div>
               </div>
@@ -825,7 +814,7 @@ export default function ChallengesPage() {
                   <div>
                     <p className="font-medium">Complete Dailies First</p>
                     <p className="text-sm text-muted-foreground">
-                      Daily challenges reset every 24h. Don't miss easy XP!
+                      Daily challenges reset every 24h. Don&apos;t miss easy XP!
                     </p>
                   </div>
                 </div>

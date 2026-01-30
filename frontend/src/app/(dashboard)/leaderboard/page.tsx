@@ -3,10 +3,7 @@
 import { useState } from "react"
 import {
   Trophy,
-  Medal,
   Crown,
-  TrendingUp,
-  TrendingDown,
   Flame,
   Target,
   Zap,
@@ -15,15 +12,12 @@ import {
   ChevronDown,
   Minus,
   Search,
-  Filter,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs,  TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 
 // Mock leaderboard data for different time periods
@@ -338,7 +332,7 @@ export default function LeaderboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {filteredLeaderboard.map((player, index) => (
+            {filteredLeaderboard.map((player) => (
               <div
                 key={player.username}
                 className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${

@@ -29,29 +29,17 @@ export interface PortfolioState {
   lastUpdated: number | null; // Timestamp for cache invalidation
 }
 
-// ==================== TRADING STATE ====================
-export interface Trade {
-  _id: string;
-  symbol: string;
-  type: "BUY" | "SELL";
-  quantity: number;
-  price: number;
-  totalCost: number;
-  executedAt: string;
-}
+import { Trade, TradeFilters, TradeHistoryResponse } from "@/types/trade.types";
 
-export interface TradingState {
-  trades: Trade[];
+interface TradingState {
+  trades: Trade[]; // Now uses the full definition
+  totalTrades: number;
+  currentPage: number;
+  totalPages: number;
   loading: boolean;
   error: string | null;
-  activeOrder: {
-    symbol: string;
-    type: "BUY" | "SELL";
-    quantity: number;
-    price: number;
-  } | null;
+  activeOrder: any | null;
 }
-
 // ==================== STOCKS STATE ====================
 
 export interface StocksState {

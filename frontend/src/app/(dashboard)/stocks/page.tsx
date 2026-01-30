@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Search,
   Star,
-  StarOff,
   BarChart3,
   Grid3X3,
   List,
-  LineChart,
   Loader2,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";

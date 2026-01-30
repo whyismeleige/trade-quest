@@ -1,11 +1,35 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { tradeApi } from "@/lib/api/trade.api";
-import { TradingState } from "@/types/redux.types";
-import { fetchPortfolio } from "./portfolio.slice";
+import { Trade, TradeFilters, TradeHistoryResponse } from "@/types/trade.types";
+import { fetchPortfolio } from "./portfolio.slice"; // Ensure this path is correct
+
+// ==================== STATE INTERFACE ====================
+
+interface TradingState {
+  trades: Trade[];
+  // Pagination State
+  totalTrades: number;
+  currentPage: number;
+  totalPages: number;
+  
+  // UI State
+  loading: boolean;
+  error: string | null;
+  activeOrder: {
+    symbol: string;
+    type: "BUY" | "SELL";
+    quantity: number;
+    price: number;
+  } | null;
+}
 
 // ==================== INITIAL STATE ====================
+
 const initialState: TradingState = {
   trades: [],
+  totalTrades: 0,
+  currentPage: 1,
+  totalPages: 1,
   loading: false,
   error: null,
   activeOrder: null,
@@ -13,19 +37,33 @@ const initialState: TradingState = {
 
 // ==================== THUNKS ====================
 
-interface BuyTradePayload {
+export const fetchTradeHistory = createAsyncThunk(
+  "trading/fetchHistory",
+  async (filters: TradeFilters | undefined, { rejectWithValue }) => {
+    try {
+      const response = await tradeApi.getHistory(filters);
+      // FIXED: Return response.data to unwrap the Axios response
+      return response.data; 
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch trade history");
+    }
+  }
+);
+
+interface TradePayload {
   symbol: string;
   quantity: number;
 }
 
 export const executeBuyTrade = createAsyncThunk(
   "trading/buy",
-  async (payload: BuyTradePayload, { dispatch, rejectWithValue }) => {
+  async (payload: TradePayload, { dispatch, rejectWithValue }) => {
     try {
       const response = await tradeApi.buy(payload);
       
-      // After successful trade, refetch portfolio
+      // Refresh portfolio balance and history after trade
       dispatch(fetchPortfolio());
+      dispatch(fetchTradeHistory({ page: 1 }));
       
       return response.data;
     } catch (error: any) {
@@ -36,12 +74,12 @@ export const executeBuyTrade = createAsyncThunk(
 
 export const executeSellTrade = createAsyncThunk(
   "trading/sell",
-  async (payload: BuyTradePayload, { dispatch, rejectWithValue }) => {
+  async (payload: TradePayload, { dispatch, rejectWithValue }) => {
     try {
       const response = await tradeApi.sell(payload);
       
-      // After successful trade, refetch portfolio
       dispatch(fetchPortfolio());
+      dispatch(fetchTradeHistory({ page: 1 }));
       
       return response.data;
     } catch (error: any) {
@@ -62,20 +100,37 @@ const tradingSlice = createSlice({
     clearActiveOrder: (state) => {
       state.activeOrder = null;
     },
-    addTradeToHistory: (state, action) => {
-      state.trades.unshift(action.payload); // Add to beginning
-    },
   },
   extraReducers: (builder) => {
     builder
-      // Buy trade
+      // --- Fetch History ---
+      .addCase(fetchTradeHistory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTradeHistory.fulfilled, (state, action: PayloadAction<TradeHistoryResponse>) => {
+        state.loading = false;
+        // Data is now correctly typed and accessible
+        state.trades = action.payload.data;
+        
+        if (action.payload.pagination) {
+          state.totalTrades = action.payload.pagination.total;
+          state.currentPage = action.payload.pagination.page;
+          state.totalPages = action.payload.pagination.pages;
+        }
+      })
+      .addCase(fetchTradeHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
+      // --- Buy Trade ---
       .addCase(executeBuyTrade.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(executeBuyTrade.fulfilled, (state, action) => {
+      .addCase(executeBuyTrade.fulfilled, (state) => {
         state.loading = false;
-        state.trades.unshift(action.payload.data.trade);
         state.activeOrder = null;
         state.error = null;
       })
@@ -83,14 +138,14 @@ const tradingSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Sell trade
+
+      // --- Sell Trade ---
       .addCase(executeSellTrade.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(executeSellTrade.fulfilled, (state, action) => {
+      .addCase(executeSellTrade.fulfilled, (state) => {
         state.loading = false;
-        state.trades.unshift(action.payload.data.trade);
         state.activeOrder = null;
         state.error = null;
       })
@@ -101,5 +156,5 @@ const tradingSlice = createSlice({
   },
 });
 
-export const { setActiveOrder, clearActiveOrder, addTradeToHistory } = tradingSlice.actions;
+export const { setActiveOrder, clearActiveOrder } = tradingSlice.actions;
 export default tradingSlice.reducer;

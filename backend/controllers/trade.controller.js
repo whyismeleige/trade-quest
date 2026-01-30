@@ -3,12 +3,40 @@ const db = require("../models");
 const mongoose = require("mongoose");
 const asyncHandler = require("../middleware/asyncHandler");
 const { ValidationError, NotFoundError } = require("../utils/error.utils");
-// const { tradeSchema } = require("../validators/trade.validator");
 
 const Trade = db.trade;
 const Portfolio = db.portfolio;
 const Stock = db.stock;
 const LeagueEntry = db.leagueEntry;
+
+exports.getTradeHistory = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  
+  // 1. Build Filter Object
+  // Allows filtering by symbol or type if provided in the URL query string
+  const filter = { userId };
+  
+  if (req.query.symbol) {
+    filter.symbol = req.query.symbol.toUpperCase();
+  }
+  
+  if (req.query.type) {
+    filter.type = req.query.type.toUpperCase(); // Ensure "BUY" or "SELL" matches
+  }
+
+  // 2. Fetch Trades
+  // Sort by 'executedAt' descending (newest first)
+  const trades = await Trade.find(filter)
+    .sort({ executedAt: -1 })
+    .lean(); // .lean() converts Mongoose docs to plain JS objects for better performance
+
+  // 3. Send Response
+  res.status(200).json({
+    success: true,
+    count: trades.length,
+    data: trades
+  });
+});
 
 /**
  * Execute a BUY Trade

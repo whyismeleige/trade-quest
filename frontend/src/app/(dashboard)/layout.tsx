@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Trophy,
   Wallet,
-  BarChart3,
   Settings,
   HelpCircle,
   ChevronLeft,
@@ -27,7 +26,6 @@ import {
   History,
   BookOpen,
   Medal,
-  Store,
   LogOut,
 } from "lucide-react";
 import {
@@ -48,7 +46,6 @@ import { Badge } from "@/components/ui/badge";
 import ProtectedRoute from "@/components/routes/ProtectedRoute";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser } from "@/store/slices/auth.slice";
-import { useMounted } from "@/hooks/useMounted";
 
 interface NavItem {
   title: string;
@@ -81,7 +78,7 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: "Trade History",
-    href: "/tradehistory",
+    href: "/trade-history",
     icon: <History className="h-5 w-5" />,
   },
 ];
@@ -311,7 +308,7 @@ export default function DashboardLayout({
                         🎉 Achievement Unlocked!
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        You earned "Hot Streak" badge
+                        You earned &quot;Hot Streak&quot; badge
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="flex flex-col items-start gap-1">

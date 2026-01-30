@@ -5,12 +5,10 @@ import {
   TrendingUp,
   TrendingDown,
   Trophy,
-  Target,
   Zap,
   ArrowUpRight,
   ArrowDownRight,
   DollarSign,
-  Activity,
   Clock,
   ChevronRight,
   Flame,
@@ -79,11 +77,9 @@ export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("1W")
   const { user } = useAppSelector((state) => state.auth);
   const portfolio = useAppSelector((state) => state.portfolio);
-  console.log("The portfolio is:", portfolio);
-  console.log("the user is", user);
   useEffect(() => {
     dispatch(fetchPortfolio());
-  },[])
+  },[dispatch])
   return (
     <div className="space-y-6">
       {/* Welcome Header */}

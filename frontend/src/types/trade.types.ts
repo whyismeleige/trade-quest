@@ -5,8 +5,8 @@ export interface TradeRequest {
 
 export interface Trade {
   _id: string;
-  userId: string;
-  portfolioId: string;
+  userId: string;       // Added back
+  portfolioId: string;  // Added back
   symbol: string;
   type: "BUY" | "SELL";
   quantity: number;
@@ -21,4 +21,24 @@ export interface TradeResponse {
     trade: Trade;
     newBalance: number;
   };
+}
+
+// Params for filtering
+export interface TradeFilters {
+  symbol?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Response structure for the list
+export interface TradeHistoryResponse {
+  success: boolean;
+  count: number;
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+  };
+  data: Trade[];
 }

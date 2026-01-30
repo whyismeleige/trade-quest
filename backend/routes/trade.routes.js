@@ -4,6 +4,7 @@ const { authenticateToken } = require("../middleware/auth.middleware");
 
 router.use(authenticateToken);
 
+router.get("/", controller.getTradeHistory);
 router.post("/buy", controller.buyStock);
 router.post("/sell", controller.sellStock);
 

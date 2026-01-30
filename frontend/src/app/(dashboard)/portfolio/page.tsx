@@ -1,29 +1,24 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   TrendingUp,
-  TrendingDown,
-  DollarSign,
   Activity,
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  Filter,
-  Download,
-  Search,
   Briefcase,
-  History,
   PieChart,
-  BarChart3,
-  Calendar,
   Wallet,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  History
 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
@@ -33,45 +28,77 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  AreaChartComponent,
   PieChartComponent,
-  BarChartComponent,
 } from "@/components/charts"
-import { useAppSelector } from "@/store/hooks"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { fetchPortfolio } from "@/store/slices/portfolio.slice"
+import { fetchTradeHistory } from "@/store/slices/trading.slice" // Import trade action
 
 export default function PortfolioPage() {
-  const [selectedPeriod, setSelectedPeriod] = useState("1M")
-  const [tradeFilter, setTradeFilter] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
+  const dispatch = useAppDispatch();
 
-  // --- Real Data Integration ---
-  const { holdings, totalValue, cashBalance, loading } = useAppSelector((state) => state.portfolio);
+  // --- Redux State ---
+  // 1. Portfolio State
+  const { 
+    holdings, 
+    totalValue, 
+    cashBalance, 
+    loading: portfolioLoading 
+  } = useAppSelector((state) => state.portfolio);
 
-  // Calculate derived P&L metrics from real data
-  const { totalProfitLoss, totalProfitLossPercent, totalCost } = useMemo(() => {
+  // 2. Trading History State (Renaming loading to avoid conflict)
+  const { 
+    trades, 
+    loading: historyLoading, 
+    totalPages, 
+    currentPage 
+  } = useAppSelector((state) => state.trading);
+
+  // --- Local State ---
+  const [historyPage, setHistoryPage] = useState(1);
+
+  // --- Effects ---
+  useEffect(() => {
+    // Fetch Portfolio Data
+    dispatch(fetchPortfolio());
+    
+    // Fetch Trade History Data (Initial load)
+    dispatch(fetchTradeHistory({ page: historyPage, limit: 5 }));
+  }, [dispatch, historyPage]);
+
+  // --- Derived Metrics ---
+  const { totalProfitLoss, totalProfitLossPercent } = useMemo(() => {
     const cost = holdings.reduce((sum, h) => sum + (h.averagePrice * h.quantity), 0);
     const pnl = holdings.reduce((sum, h) => sum + h.profitLoss, 0);
     const pnlPercent = cost > 0 ? (pnl / cost) * 100 : 0;
-    return { totalProfitLoss: pnl, totalProfitLossPercent: pnlPercent, totalCost: cost };
+    return { totalProfitLoss: pnl, totalProfitLossPercent: pnlPercent };
   }, [holdings]);
 
-  // Transform holdings for the Sector Allocation (Mocking sector as 'Equity' since API doesn't provide it)
+  // Transform holdings for Allocation Chart
   const allocationData = useMemo(() => [
-    { name: "Stocks", value: totalValue - cashBalance, color: "var(--primary)" },
+    { name: "Stocks", value: Math.max(0, totalValue - cashBalance), color: "var(--primary)" },
     { name: "Cash", value: cashBalance, color: "var(--secondary)" },
   ], [totalValue, cashBalance]);
 
-  if (loading) {
-    return <div className="flex h-96 items-center justify-center">Loading portfolio...</div>;
+  // --- Handlers ---
+  const handleHistoryPageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setHistoryPage(newPage);
+    }
+  };
+
+  // Helper for pagination button state
+  const isFirstPage = currentPage === 1;
+  const isLastPage = currentPage === totalPages;
+
+  if (portfolioLoading && holdings.length === 0) {
+    return (
+      <div className="flex h-96 items-center justify-center gap-2 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        Loading portfolio...
+      </div>
+    );
   }
 
   return (
@@ -84,7 +111,7 @@ export default function PortfolioPage() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" /> Export
+            <Download className="mr-2 h-4 w-4" /> Export Report
           </Button>
           <Button size="sm">
             <Activity className="mr-2 h-4 w-4" /> Trade Now
@@ -94,6 +121,7 @@ export default function PortfolioPage() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Total Value */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -106,11 +134,12 @@ export default function PortfolioPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Total Portfolio Value</p>
-              <p className="text-2xl font-bold">${totalValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
             </div>
           </CardContent>
         </Card>
 
+        {/* Cash Balance */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -120,12 +149,13 @@ export default function PortfolioPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Cash Balance</p>
-              <p className="text-2xl font-bold">${cashBalance.toLocaleString()}</p>
+              <p className="text-2xl font-bold">${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Available for trading</p>
           </CardContent>
         </Card>
 
+        {/* Total P&L */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -142,6 +172,7 @@ export default function PortfolioPage() {
           </CardContent>
         </Card>
 
+        {/* Active Holdings Count */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -157,12 +188,14 @@ export default function PortfolioPage() {
         </Card>
       </div>
 
+      {/* Tabs Section */}
       <Tabs defaultValue="holdings" className="space-y-6">
         <TabsList>
           <TabsTrigger value="holdings">Holdings</TabsTrigger>
           <TabsTrigger value="history">Trade History</TabsTrigger>
         </TabsList>
 
+        {/* --- HOLDINGS TAB --- */}
         <TabsContent value="holdings" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
@@ -184,7 +217,11 @@ export default function PortfolioPage() {
                   <TableBody>
                     {holdings.map((holding) => (
                       <TableRow key={holding.symbol}>
-                        <TableCell className="font-bold">{holding.symbol}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-bold">{holding.symbol}</p>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right">{holding.quantity}</TableCell>
                         <TableCell className="text-right">${holding.averagePrice.toFixed(2)}</TableCell>
                         <TableCell className="text-right">${holding.currentPrice.toFixed(2)}</TableCell>
@@ -196,7 +233,9 @@ export default function PortfolioPage() {
                     ))}
                     {holdings.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">No holdings found.</TableCell>
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                          No active holdings. Start trading to build your portfolio.
+                        </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -213,8 +252,11 @@ export default function PortfolioPage() {
                 <div className="mt-4 space-y-2">
                   {allocationData.map((item) => (
                     <div key={item.name} className="flex justify-between text-sm">
-                      <span>{item.name}</span>
-                      <span className="font-bold">${item.value.toLocaleString()}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span>{item.name}</span>
+                      </div>
+                      <span className="font-bold">${item.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                     </div>
                   ))}
                 </div>
@@ -223,12 +265,98 @@ export default function PortfolioPage() {
           </div>
         </TabsContent>
         
-        {/* Note: Trade History would need its own state/API call if not in PortfolioData */}
+        {/* --- TRADE HISTORY TAB --- */}
         <TabsContent value="history">
           <Card>
-            <CardHeader><CardTitle>Trade History</CardTitle></CardHeader>
-            <CardContent className="text-center py-10 text-muted-foreground">
-              History data integration pending API endpoint.
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {historyLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        <div className="flex justify-center items-center gap-2">
+                           <Loader2 className="h-4 w-4 animate-spin" /> Loading history...
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : trades.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <History className="h-8 w-8 opacity-20" />
+                          No trading history found.
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    trades.map((trade) => (
+                      <TableRow key={trade._id}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{new Date(trade.executedAt).toLocaleDateString()}</span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(trade.executedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-bold">{trade.symbol}</TableCell>
+                        <TableCell>
+                          <Badge variant={trade.type === "BUY" ? "default" : "destructive"}>
+                            {trade.type === "BUY" ? <ArrowUpRight className="mr-1 h-3 w-3" /> : <ArrowDownRight className="mr-1 h-3 w-3" />}
+                            {trade.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{trade.quantity}</TableCell>
+                        <TableCell className="text-right">${trade.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          ${trade.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+
+              {/* Simple Pagination for History Tab */}
+              {!historyLoading && trades.length > 0 && (
+                <div className="flex items-center justify-end space-x-2 py-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleHistoryPageChange(historyPage - 1)}
+                    disabled={isFirstPage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <div className="text-sm font-medium">
+                    Page {historyPage} of {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleHistoryPageChange(historyPage + 1)}
+                    disabled={isLastPage}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

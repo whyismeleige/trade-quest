@@ -1,5 +1,4 @@
 "use client";
-import { AnimatedThemeToggler } from "@/components/providers/theme.provider"
 import PublicRoute from "@/components/routes/PublicRoute";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,7 +146,7 @@ function AuthPage() {
     try {
       setLoading(true);
 
-      const result = await dispatch(
+      await dispatch(
         view === "signup"
           ? registerUser({ email, password, name })
           : loginUser({ email, password })
