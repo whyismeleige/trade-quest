@@ -1,0 +1,44 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.978.0",
+    "@aws-sdk/s3-request-presigner": "^3.978.0",
+    "@elevenlabs/elevenlabs-js": "^2.33.0",
+    "@google/genai": "^1.38.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.4",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "geoip-lite": "^1.4.10",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.1.5",
+    "multer": "^2.0.2",
+    "multer-s3": "^3.0.1",
+    "nanoid": "^5.1.6",
+    "nodemailer": "^7.0.13",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
+    "redis": "^5.10.0",
+    "socket.io": "^4.8.3",
+    "ua-parser-js": "^2.0.8",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "mongodb-memory-server": "^11.0.1"
+  }
+}
