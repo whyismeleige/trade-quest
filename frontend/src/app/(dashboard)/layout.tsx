@@ -273,10 +273,46 @@ export default function DashboardLayout({
                </DropdownMenuItem>
              </DropdownMenuContent>
            </DropdownMenu>
-           <Avatar className="h-9 w-9">
-             <AvatarImage src="/avatars/user.png" alt="User" />
-             <AvatarFallback className="bg-primary/10 text-primary text-sm">PJ</AvatarFallback>
-           </Avatar>
+           
+           {/* Mobile User Menu */}
+           <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+               <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+                 <Avatar className="h-9 w-9">
+                   <AvatarImage src="/avatars/user.png" alt="User" />
+                   <AvatarFallback className="bg-primary/10 text-primary text-sm">PJ</AvatarFallback>
+                 </Avatar>
+               </Button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent align="end" className="w-56">
+               <DropdownMenuLabel>
+                 <div className="flex items-center gap-3">
+                   <Avatar className="h-10 w-10">
+                     <AvatarImage src="/avatars/user.png" alt="User" />
+                     <AvatarFallback className="bg-primary/10 text-primary">PJ</AvatarFallback>
+                   </Avatar>
+                   <div className="flex flex-col space-y-1">
+                     <p className="text-sm font-medium">Piyush</p>
+                     <p className="text-xs text-muted-foreground">piyush@example.com</p>
+                   </div>
+                 </div>
+               </DropdownMenuLabel>
+               <DropdownMenuSeparator />
+               <DropdownMenuItem>
+                 <Settings className="mr-2 h-4 w-4" />
+                 Settings
+               </DropdownMenuItem>
+               <DropdownMenuItem>
+                 <HelpCircle className="mr-2 h-4 w-4" />
+                 Help & Support
+               </DropdownMenuItem>
+               <DropdownMenuSeparator />
+               <DropdownMenuItem className="text-red-600">
+                 <LogOut className="mr-2 h-4 w-4" />
+                 Log out
+               </DropdownMenuItem>
+             </DropdownMenuContent>
+           </DropdownMenu>
          </div>
        </div>
 
@@ -416,9 +452,9 @@ export default function DashboardLayout({
        </aside>
 
        {/* Main Content */}
-       <div className="flex flex-1 flex-col overflow-hidden">
-         {/* Top Header */}
-         <header className="flex h-16 items-center justify-end border-b bg-card px-6">
+       <div className="flex flex-1 flex-col overflow-hidden pt-14 md:pt-0">
+         {/* Top Header - Desktop only */}
+         <header className="hidden md:flex h-16 items-center justify-end border-b bg-card px-6">
            <div className="flex items-center gap-2">
              {/* Real-time Market Status */}
              <div className="flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 h-9">
@@ -503,7 +539,7 @@ export default function DashboardLayout({
          </header>
 
          {/* Page Content */}
-         <main className="flex-1 overflow-y-auto bg-muted/30 p-3 sm:p-4 md:p-6 pt-[70px] md:pt-6">
+         <main className="flex-1 overflow-y-auto bg-muted/30 p-3 sm:p-4 md:p-6">
            {children}
          </main>
        </div>
