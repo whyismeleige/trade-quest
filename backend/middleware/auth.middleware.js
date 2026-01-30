@@ -1,10 +1,9 @@
-const { decodeAccessToken } = require("../utils/auth.utils");
+const { verifyToken } = require("../utils/auth.utils");
 const User = require("../models").user;
 const redisClient = require("../database/redis");
 
 exports.authenticateToken = async (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = req.cookies.token;
 
   if (!token) {
     return res.status(401).send({
@@ -14,7 +13,7 @@ exports.authenticateToken = async (req, res, next) => {
   }
 
   try {
-    const { id } = decodeAccessToken(token);
+    const { id } = verifyToken(token);
 
     let user = await redisClient.get(id);
 
@@ -38,6 +37,7 @@ exports.authenticateToken = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error("The error is:", error);
     return res.status(403).send({
       message: "Unauthorized Access",
       type: "error",

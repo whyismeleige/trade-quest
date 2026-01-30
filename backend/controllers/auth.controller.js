@@ -1,3 +1,4 @@
+const mongoose = require("mongoose"); // Required for transactions
 const db = require("../models");
 const asyncHandler = require("../middleware/asyncHandler");
 
@@ -12,6 +13,7 @@ const {
 } = require("../utils/auth.utils");
 
 const User = db.user;
+const Portfolio = db.portfolio;
 
 // Get Cookie Options
 const getCookieOptions = () => ({
@@ -33,9 +35,8 @@ exports.getProfile = asyncHandler(async (req, res) => {
   });
 });
 
-
 /**
- * @description Register New User
+ * @description Register New User with Automatic Portfolio
  * @route POST /api/auth/register
  */
 exports.register = asyncHandler(async (req, res) => {
@@ -46,45 +47,70 @@ exports.register = asyncHandler(async (req, res) => {
     throw new ValidationError("Enter Valid Input");
   }
 
-  // Check if user already exists to prevent duplicate registrations
+  // Check if user already exists
   const userExists = await User.findOne({ email });
-
   if (userExists) {
     throw new AuthenticationError("User already exists");
   }
 
-  // Extract request metadata (IP, user agent, etc) for security tracking
   const metadata = getMetaData(req);
 
-  // Create new user with local provider
-  // Password will be hashed by pre-save hook in User model
-  const newUser = await User.create({
-    email,
-    name,
-    password,
-    activity: {
-      totalLogins: [
-        {
-          metadata,
-        },
-      ],
-    },
-  });
+  // --- START TRANSACTION ---
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // Generate JWT Token
-  const token = createToken({
-    id: newUser._id,
-  });
+  try {
+    // 1. Create User
+    // We use array syntax [] for create with session, 
+    // or use new User().save({ session })
+    const [newUser] = await User.create([{
+      email,
+      name,
+      password,
+      activity: {
+        totalLogins: [{ metadata }],
+      },
+    }], { session });
 
-  res.cookie("token", token, getCookieOptions());
+    // 2. Create Portfolio linked to this User
+    const [newPortfolio] = await Portfolio.create([{
+      userId: newUser._id,
+      cashBalance: 100000,
+      totalValue: 100000,
+      holdings: []
+    }], { session });
 
-  res.status(201).send({
-    message: "User registered successfully",
-    type: "success",
-    user: sanitizeUser(newUser), // Remove sensitive fields before sending
-  });
+    // 3. Link Portfolio ID back to User (for easy populate)
+    newUser.portfolio = newPortfolio._id;
+    await newUser.save({ session });
+
+    // 4. Commit Transaction
+    await session.commitTransaction();
+
+    // --- END TRANSACTION ---
+
+    // Generate JWT Token
+    const token = createToken({
+      id: newUser._id,
+    });
+
+    res.cookie("token", token, getCookieOptions());
+
+    res.status(201).send({
+      message: "User registered successfully",
+      type: "success",
+      user: sanitizeUser(newUser),
+      portfolioId: newPortfolio._id 
+    });
+
+  } catch (error) {
+    // If anything fails (User created but Portfolio failed), roll back everything
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 });
-
 
 /**
  * @description Login User
@@ -99,14 +125,14 @@ exports.login = asyncHandler(async (req, res) => {
 
   const metadata = getMetaData(req);
 
-  // Explicitly select password field (excluded by default in schema)
+  // Explicitly select password field
   const userExists = await User.findOne({ email }).select("+password");
 
   if (!userExists) {
     throw new AuthenticationError("User does not exist. Please Register");
   }
 
-  // Check if account is locked due to failed login attempts
+  // Check if account is locked
   if (userExists.isLocked()) {
     const minutesLeft = Math.ceil(
       (userExists.security.lockUntil - Date.now()) / (1000 * 60)
@@ -119,20 +145,16 @@ exports.login = asyncHandler(async (req, res) => {
   const passwordsMatch = await userExists.passwordsMatch(password);
 
   if (!passwordsMatch) {
-    // Track failed login attempt (may trigger account lock)
     await userExists.inSuccessfulLogin();
     throw new AuthenticationError("Passwords do not match");
   }
 
-  // Generate JWT Tokens for authentication
   const token = createToken({
     id: userExists._id,
   });
 
-  // Update login tracking and store refresh token
   await userExists.successfulLogin(metadata);
 
-  // Set HttpOnly Cookie
   res.cookie("token", token, getCookieOptions());
 
   res.status(200).send({
@@ -141,8 +163,6 @@ exports.login = asyncHandler(async (req, res) => {
     user: sanitizeUser(userExists),
   });
 });
-
-
 
 /**
  * @description Logout User

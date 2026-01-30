@@ -7,14 +7,8 @@ const crypto = require("crypto");
 const getRandomAvatar = () => {
   const seed = crypto.randomUUID();
   const styles = [
-    "adventurer",
-    "big-smile",
-    "fun-emoji",
-    "lorelei",
-    "micah",
-    "notionists",
-    "pixel-art",
-    "croodles",
+    "adventurer", "big-smile", "fun-emoji", "lorelei", 
+    "micah", "notionists", "pixel-art", "croodles",
   ];
   const style = styles[Math.floor(Math.random() * styles.length)];
   return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
@@ -70,9 +64,14 @@ const UserSchema = new mongoose.Schema(
       maxlength: [50, "Name cannot exceed 50 characters"],
       index: true,
     },
+    // NEW: Link to Portfolio for 1:1 Relationship
+    portfolio: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Portfolio",
+    },
     avatar: {
       type: String,
-      default: getRandomAvatar(),
+      default: getRandomAvatar, // Passed function reference is cleaner
     },
     totalPoints: {
       type: Number,
@@ -143,7 +142,7 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.methods.isLocked = function () {
-  return Date.now() < this.security.lockUntil;
+  return this.security.lockUntil && Date.now() < this.security.lockUntil;
 };
 
 UserSchema.methods.passwordsMatch = async function (password) {
@@ -169,11 +168,12 @@ UserSchema.methods.successfulLogin = async function (metadata) {
 };
 
 UserSchema.pre("save", async function () {
-  if (this.security.lockUntil < Date.now()) {
+  if (this.security.lockUntil && this.security.lockUntil < Date.now()) {
     this.security.lockUntil = null;
   }
-  if (this.isModified("password"))
+  if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
+  }
   if (this.security.loginAttempts === 5) {
     this.security.loginAttempts = 0;
     this.security.lockUntil = Date.now() + 5 * 60 * 1000;

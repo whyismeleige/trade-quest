@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import ProtectedRoute from "@/components/routes/ProtectedRoute"
 
 interface NavItem {
   title: string
@@ -138,6 +139,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
 
   return (
+    <ProtectedRoute>
     <TooltipProvider delayDuration={0}>
       <div className="flex h-screen overflow-hidden bg-background">
         {/* Sidebar */}
@@ -358,6 +360,7 @@ export default function DashboardLayout({
         </div>
       </div>
     </TooltipProvider>
+    </ProtectedRoute>
   )
 }
 
