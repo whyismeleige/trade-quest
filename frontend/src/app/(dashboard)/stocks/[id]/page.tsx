@@ -8,7 +8,8 @@ import {
   ChevronDown, 
   Loader2, 
   AlertCircle, 
-  Clock 
+  Clock,
+  Wallet 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,43 +25,54 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 
-// Make sure this points to your corrected Chart Component file
+// Charts
 import { AreaChartComponent } from "@/components/charts/area-chart"; 
 
+// Redux
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchStockDetails,
   fetchStockHistory,
 } from "@/store/slices/stocks.slice";
+import { 
+  executeBuyTrade, 
+  executeSellTrade 
+} from "@/store/slices/trading.slice";
 
 export default function StockPage() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  // 1. Handle Route Params (supports [id] or [stockid])
+  // 1. Handle Route Params
   const rawId = params.stockid || params.id;
   const stockSymbol = typeof rawId === 'string' ? rawId.toUpperCase() : "AAPL";
 
-  const { selectedStock, stockHistory, loading } = useAppSelector(
+  // 2. GET STOCK DATA FROM REDUX
+  const { selectedStock, stockHistory, loading: stockLoading } = useAppSelector(
     (state) => state.stocks,
   );
 
-  const [selectedInterval, setSelectedInterval] = useState("1D"); // Default to 1D
+  // 3. GET TRADING STATE (For loading spinner on buttons)
+  const { loading: tradeLoading, error: tradeError } = useAppSelector(
+    (state) => state.trading
+  );
+
+  const { cashBalance } = useAppSelector((state) => state.portfolio)
+
+  const [selectedInterval, setSelectedInterval] = useState("1D");
   const [tradeQty, setTradeQty] = useState("1");
 
-  // 2. Initial Data Load
+  // Initial Data Load
   useEffect(() => {
     if (!stockSymbol) return;
 
     const loadData = async () => {
-      // Fetch details (current price, name, etc.)
       const result = await dispatch(fetchStockDetails(stockSymbol));
       
       if (fetchStockDetails.rejected.match(result)) {
         router.push("/?error=stock_not_found");
       } else {
-        // If details found, fetch the history for the default interval
         dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
       }
     };
@@ -69,45 +81,68 @@ export default function StockPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockSymbol, router, dispatch]);
 
-  // 3. Interval Switcher Listener
+  // Interval Switcher Listener
   useEffect(() => {
     if (stockSymbol) {
       dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
     }
   }, [dispatch, stockSymbol, selectedInterval]);
 
-  // 4. CHART DATA TRANSFORMATION (Crucial for 1Y view)
+  // --- TRADING LOGIC ---
+  const handleTrade = async (type: "BUY" | "SELL") => {
+    const quantity = parseInt(tradeQty);
+    
+    if (!stockSymbol || isNaN(quantity) || quantity <= 0) return;
+
+    const payload = {
+      symbol: stockSymbol,
+      quantity: quantity,
+    };
+
+    try {
+      const action = type === "BUY" ? executeBuyTrade : executeSellTrade;
+      const result = await dispatch(action(payload));
+
+      if (action.fulfilled.match(result)) {
+        // Optional: Reset qty or show success toast here
+        console.log(`${type} Successful`, result.payload);
+        // If you have a toast library: toast.success(`${type} Successful!`);
+      } else {
+        console.error(`${type} Failed`, result.payload);
+        // If you have a toast library: toast.error(result.payload as string);
+      }
+    } catch (error) {
+      console.error("Unexpected error", error);
+    }
+  };
+
+  // --- CHART DATA TRANSFORMATION ---
   const chartData = useMemo(() => {
     const history = stockHistory[stockSymbol]?.[selectedInterval];
 
-    // Safety check: ensure history is an array
     if (!Array.isArray(history) || history.length === 0) return [];
 
     return history.map((point) => {
       const date = new Date(point.timestamp);
       let label = "";
 
-      // FORMAT X-AXIS LABELS BASED ON INTERVAL
       if (selectedInterval === "1D") {
-        // For 1 Day: Show Time (10:30 AM)
         label = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       } else if (selectedInterval === "1W" || selectedInterval === "1M") {
-        // For 1 Week/Month: Show Date (Jan 15)
         label = date.toLocaleDateString([], { month: "short", day: "numeric" });
       } else {
-        // For 1 Year (1Y): Show Date with Year (Jan 15 25) to differentiate
         label = date.toLocaleDateString([], { month: "short", day: "numeric", year: "2-digit" });
       }
 
       return {
-        name: label,        // X-Axis Label
-        value: point.price, // Y-Axis Value
-        fullDate: date.toLocaleString(), // Extra data for custom tooltips if needed
+        name: label,
+        value: point.price,
+        fullDate: date.toLocaleString(),
       };
     });
   }, [stockHistory, stockSymbol, selectedInterval]);
 
-  // 5. UI Derived Values
+  // UI Derived Values
   const currentPrice = selectedStock?.price || 0;
   const priceChangePercent = selectedStock?.changePercent || 0;
   const isPositive = priceChangePercent >= 0;
@@ -117,8 +152,14 @@ export default function StockPage() {
 
   const intervals = ["1D", "1W", "1M", "3M", "1Y"];
 
-  // 6. Loading State (Only full screen load on initial visit)
-  if (loading && !selectedStock) {
+  // Cost Calculations
+  const estimatedCost = Number(tradeQty) * currentPrice;
+  const estimatedFee = estimatedCost * 0.001; // 0.1% fee
+  const totalCost = estimatedCost + estimatedFee;
+  const canAfford = cashBalance >= totalCost;
+
+  // Global Loading State (for page)
+  if (stockLoading && !selectedStock) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -135,10 +176,9 @@ export default function StockPage() {
     <TooltipProvider>
       <div className="min-h-screen bg-background flex flex-col">
         
-        {/* --- HEADER SECTION --- */}
+        {/* --- HEADER --- */}
         <header className="border-b bg-card px-6 py-3 flex items-center justify-between shadow-sm z-10">
           <div className="flex items-center gap-6">
-            {/* Symbol Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-xl font-bold gap-2 px-2 hover:bg-muted/50">
@@ -156,7 +196,6 @@ export default function StockPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Price & Change */}
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-bold tracking-tight">
                 ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -175,7 +214,6 @@ export default function StockPage() {
             </div>
           </div>
 
-          {/* Interval Selectors */}
           <div className="flex items-center gap-4">
             <div className="flex bg-muted/50 p-1 rounded-lg">
               {intervals.map((interval) => (
@@ -194,7 +232,21 @@ export default function StockPage() {
                 </Button>
               ))}
             </div>
+
             <Separator orientation="vertical" className="h-6" />
+
+            {/* Wallet Display */}
+            <div className="flex flex-col items-end text-right px-2 min-w-[100px]">
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
+                <Wallet className="w-3 h-3" /> Balance
+              </span>
+              <span className="font-mono text-sm font-semibold text-primary">
+                ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            <Separator orientation="vertical" className="h-6" />
+
             <div className="flex flex-col items-end text-[10px] text-muted-foreground leading-tight">
               <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> UPDATED</span>
               <span className="font-mono">{lastUpdated}</span>
@@ -202,10 +254,10 @@ export default function StockPage() {
           </div>
         </header>
 
-        {/* --- MAIN CONTENT LAYOUT --- */}
+        {/* --- MAIN CONTENT --- */}
         <div className="flex flex-1 overflow-hidden">
           
-          {/* LEFT: CHART AREA */}
+          {/* LEFT: CHART */}
           <div className="flex-1 p-4 md:p-6 overflow-hidden bg-gradient-to-b from-background to-muted/20">
             <Card className="h-full border shadow-sm bg-card/50 backdrop-blur-sm flex flex-col">
               <CardContent className="p-6 h-full flex flex-col">
@@ -218,11 +270,8 @@ export default function StockPage() {
                   </div>
                 </div>
                 
-                {/* IMPORTANT: 'min-h-0' and 'flex-1' are required here 
-                   so the ResponsiveContainer inside AreaChartComponent knows its parent's height.
-                */}
                 <div className="flex-1 min-h-0 w-full relative">
-                  {loading && chartData.length === 0 ? (
+                  {stockLoading && chartData.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
@@ -232,7 +281,6 @@ export default function StockPage() {
                       dataKey="value" 
                       name="Price"
                       positiveColor="var(--accent)" 
-                      // Height is handled by the parent container now
                       className="h-full w-full"
                     />
                   ) : (
@@ -246,9 +294,9 @@ export default function StockPage() {
             </Card>
           </div>
 
-          {/* RIGHT: SIDEBAR (Buy/Sell) */}
+          {/* RIGHT: TRADING SIDEBAR */}
           <div className="w-80 xl:w-96 border-l bg-card flex flex-col h-full shadow-xl z-20">
-            {/* Stock Info Header */}
+            {/* Header */}
             <div className="p-6 xl:p-8 border-b bg-muted/10">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">About Asset</span>
               <h2 className="text-2xl xl:text-3xl font-black mt-2 tracking-tight line-clamp-1" title={selectedStock?.name}>
@@ -263,21 +311,24 @@ export default function StockPage() {
               </div>
             </div>
 
-            {/* Trading Form */}
+            {/* Form */}
             <div className="flex-1 p-6 xl:p-8 space-y-6 overflow-y-auto">
               
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</Label>
-                  <span className="text-[10px] text-muted-foreground">Avail: $5,000.00</span>
+                  <span className={`text-[10px] font-mono ${!canAfford ? "text-red-500" : "text-muted-foreground"}`}>
+                    Avail: ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div className="relative group">
                   <Input
                     type="number"
                     min="1"
-                    max="150"
+                    max="1000"
                     value={tradeQty}
                     onChange={(e) => setTradeQty(e.target.value)}
+                    disabled={tradeLoading}
                     className="text-2xl font-bold h-14 pl-4 pr-16 border-2 focus-visible:ring-2 focus-visible:ring-offset-0 transition-all"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm pointer-events-none group-focus-within:text-primary">
@@ -295,16 +346,27 @@ export default function StockPage() {
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Est. Fee (0.1%)</span>
                   <span className="font-mono text-xs text-muted-foreground">
-                    ${(Number(tradeQty) * currentPrice * 0.001).toFixed(2)}
+                    ${estimatedFee.toFixed(2)}
                   </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center pt-1">
                   <span className="font-bold text-sm">Total Cost</span>
-                  <span className="text-xl font-bold tracking-tight text-primary">
-                    ${(Number(tradeQty) * currentPrice * 1.001).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-xl font-bold tracking-tight text-primary block">
+                      ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    {!canAfford && (
+                      <span className="text-[10px] text-red-500 font-bold block">Insufficient Funds</span>
+                    )}
+                  </div>
                 </div>
+                {/* Error Message Display */}
+                {tradeError && (
+                   <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded border border-red-500/20 mt-2">
+                     {tradeError}
+                   </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -312,17 +374,22 @@ export default function StockPage() {
                 <Button 
                   size="lg" 
                   className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wide shadow-md shadow-emerald-900/10 active:scale-[0.98] transition-all"
-                  disabled={loading}
+                  disabled={tradeLoading || !canAfford || stockLoading}
+                  onClick={() => handleTrade("BUY")}
                 >
-                  BUY {stockSymbol}
+                  {tradeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {tradeLoading ? "PROCESSING..." : `BUY ${stockSymbol}`}
                 </Button>
+
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="h-12 border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:border-red-800 font-bold tracking-wide active:scale-[0.98] transition-all"
-                  disabled={loading}
+                  disabled={tradeLoading || stockLoading}
+                  onClick={() => handleTrade("SELL")}
                 >
-                  SELL {stockSymbol}
+                  {tradeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {tradeLoading ? "PROCESSING..." : `SELL ${stockSymbol}`}
                 </Button>
               </div>
             </div>
