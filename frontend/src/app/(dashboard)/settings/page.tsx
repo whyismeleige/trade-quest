@@ -175,7 +175,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src="/avatars/user.png" alt="Profile" />
+                    <AvatarImage src={user?.avatar} alt="Profile" />
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary">PJ</AvatarFallback>
                   </Avatar>
                   <Button

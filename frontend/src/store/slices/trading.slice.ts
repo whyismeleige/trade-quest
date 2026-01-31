@@ -160,7 +160,7 @@ const tradingSlice = createSlice({
         state.activeOrder = null;
         state.error = null;
         toast.success(
-          `Successfully bought ${action.meta.arg.quantity} shares!`,
+          `Successfully sold ${action.meta.arg.quantity} shares!`,
           {
             icon: "🎉",
             duration: 4000,
