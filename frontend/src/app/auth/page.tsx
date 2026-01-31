@@ -150,11 +150,11 @@ function AuthPage() {
         view === "signup"
           ? registerUser({ email, password, name })
           : loginUser({ email, password })
-      )
+      ).unwrap()
       
       router.push("/dashboard");
     } catch (error) {
-      
+      console.error("Authentication Failed", error);
     } finally {
       setLoading(false);
     }
