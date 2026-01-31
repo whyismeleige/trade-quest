@@ -1,26 +1,50 @@
-// frontend/src/lib/confetti.ts (CREATE THIS)
 import confetti from 'canvas-confetti';
 
 export const celebrateAchievement = (rarity: string) => {
-  const duration = rarity === 'legendary' ? 5000 : 3000;
-  const animationEnd = Date.now() + duration;
+  const isLegendary = rarity === 'legendary';
   
-  const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-  
-  const interval = setInterval(() => {
-    const timeLeft = animationEnd - Date.now();
-    
-    if (timeLeft <= 0) {
-      return clearInterval(interval);
-    }
-    
-    confetti({
-      particleCount: rarity === 'legendary' ? 5 : 2,
-      angle: randomInRange(55, 125),
-      spread: randomInRange(50, 70),
-      origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 }
-    });
-  }, 250);
-};
+  // 1. Instant Initial Burst
+  confetti({
+    particleCount: isLegendary ? 150 : 80,
+    spread: isLegendary ? 100 : 70,
+    origin: { y: 0.6 },
+    colors: isLegendary ? ['#FFD700', '#FFA500', '#FFFFFF'] : undefined, // Gold/Silver for Legendary
+    zIndex: 9999,
+  });
 
-// Use in achievement unlock handler
+  // 2. Continuous Side Cannons
+  const duration = isLegendary ? 5000 : 2000;
+  const animationEnd = Date.now() + duration;
+
+  const frame = () => {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) return;
+
+    const particleCount = isLegendary ? 4 : 2;
+
+    // Left Cannon
+    confetti({
+      particleCount,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.65 },
+      colors: isLegendary ? ['#FFD700', '#FFA500'] : undefined,
+      zIndex: 9999,
+    });
+
+    // Right Cannon
+    confetti({
+      particleCount,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.65 },
+      colors: isLegendary ? ['#FFD700', '#FFA500'] : undefined,
+      zIndex: 9999,
+    });
+
+    requestAnimationFrame(frame);
+  };
+
+  frame();
+};

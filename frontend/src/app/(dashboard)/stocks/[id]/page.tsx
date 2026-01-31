@@ -3,17 +3,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
-  TrendingUp, 
-  TrendingDown, 
   ChevronDown, 
   Loader2, 
   AlertCircle, 
-  Clock,
-  Wallet 
+  Wallet,
+  ArrowLeft,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -24,20 +21,17 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 // Charts
 import { AreaChartComponent } from "@/components/charts/area-chart"; 
 
 // Redux
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  fetchStockDetails,
-  fetchStockHistory,
-} from "@/store/slices/stocks.slice";
-import { 
-  executeBuyTrade, 
-  executeSellTrade 
-} from "@/store/slices/trading.slice";
+import { fetchStockDetails, fetchStockHistory } from "@/store/slices/stocks.slice";
+import { executeBuyTrade, executeSellTrade } from "@/store/slices/trading.slice";
+
+// Hooks
 import { useMarketStream } from "@/hooks/useMarketStream";
 
 export default function StockPage() {
@@ -45,138 +39,80 @@ export default function StockPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  // Activate Real-Time Stream
+  // 1. Activate Live Socket Stream
   useMarketStream();
 
-  // 1. Handle Route Params
   const rawId = params.stockid || params.id;
   const stockSymbol = typeof rawId === 'string' ? rawId.toUpperCase() : "AAPL";
 
-  // 2. GET STOCK DATA FROM REDUX
-  const { selectedStock, stockHistory, loading: stockLoading } = useAppSelector(
-    (state) => state.stocks,
-  );
-
-  // 3. GET TRADING STATE
-  const { loading: tradeLoading, error: tradeError } = useAppSelector(
-    (state) => state.trading
-  );
-
-  const { cashBalance } = useAppSelector((state) => state.portfolio)
-
-  // UPDATED: Default to '1H' for immediate real-time view
-  const [selectedInterval, setSelectedInterval] = useState("1H");
+  // 2. Local State
   const [tradeQty, setTradeQty] = useState("1");
 
-  // Initial Data Load
+  // 3. Selectors
+  const stockLoading = useAppSelector((state) => state.stocks.loading);
+  const selectedStock = useAppSelector((state) => state.stocks.selectedStock);
+  
+  // ⚡ SIMPLIFIED SELECTOR: Always grab "1D" (Live) data
+  const currentChartData = useAppSelector((state) => 
+    state.stocks.stockHistory[stockSymbol]?.["1D"] || []
+  );
+
+  const { cashBalance } = useAppSelector((state) => state.portfolio);
+  const { loading: tradeLoading, error: tradeError } = useAppSelector((state) => state.trading);
+
+  // 4. Initial Load (Hardcoded to '1D' for Live View)
   useEffect(() => {
     if (!stockSymbol) return;
-
+    
     const loadData = async () => {
       const result = await dispatch(fetchStockDetails(stockSymbol));
       
       if (fetchStockDetails.rejected.match(result)) {
         router.push("/?error=stock_not_found");
       } else {
-        // Fetch specific history range after details load
-        dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
+        // Always fetch 1D base data for live view
+        dispatch(fetchStockHistory({ symbol: stockSymbol, range: "1D" }));
       }
     };
-
+    
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockSymbol, router, dispatch]);
 
-  // Interval Switcher Listener
-  useEffect(() => {
-    if (stockSymbol) {
-      dispatch(fetchStockHistory({ symbol: stockSymbol, range: selectedInterval }));
-    }
-  }, [dispatch, stockSymbol, selectedInterval]);
-
-  // --- TRADING LOGIC ---
   const handleTrade = async (type: "BUY" | "SELL") => {
     const quantity = parseInt(tradeQty);
-    
     if (!stockSymbol || isNaN(quantity) || quantity <= 0) return;
-
-    const payload = {
-      symbol: stockSymbol,
-      quantity: quantity,
-    };
-
-    try {
-      const action = type === "BUY" ? executeBuyTrade : executeSellTrade;
-      const result = await dispatch(action(payload));
-
-      if (action.fulfilled.match(result)) {
-        console.log(`${type} Successful`, result.payload);
-      } else {
-        console.error(`${type} Failed`, result.payload);
-      }
-    } catch (error) {
-      console.error("Unexpected error", error);
-    }
+    const action = type === "BUY" ? executeBuyTrade : executeSellTrade;
+    await dispatch(action({ symbol: stockSymbol, quantity }));
   };
 
-  // --- CHART DATA TRANSFORMATION ---
-  const chartData = useMemo(() => {
-    const history = stockHistory[stockSymbol]?.[selectedInterval];
+  // 5. Simple Live Data Formatting
+  const formattedChartData = useMemo(() => {
+    if (!Array.isArray(currentChartData) || currentChartData.length === 0) return [];
 
-    if (!Array.isArray(history) || history.length === 0) return [];
-
-    return history.map((point) => {
+    return currentChartData.map((point) => {
       const date = new Date(point.timestamp);
-      let label = "";
-
-      // UPDATED: Logic for smaller timeframes (1m, 1H)
-      if (selectedInterval === "1m") {
-        // For 1 minute, show seconds
-        label = date.toLocaleTimeString([], { minute: "2-digit", second: "2-digit" });
-      } else if (selectedInterval === "1H" || selectedInterval === "1D") {
-        // For 1 Hour or 1 Day, show HH:MM
-        label = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      } else if (selectedInterval === "1W" || selectedInterval === "1M") {
-        label = date.toLocaleDateString([], { month: "short", day: "numeric" });
-      } else {
-        label = date.toLocaleDateString([], { month: "short", day: "numeric", year: "2-digit" });
-      }
-
-      return {
-        name: label,
-        value: point.price,
-        fullDate: date.toLocaleString(),
+      return { 
+        name: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }), 
+        value: point.price, 
+        fullDate: date.toLocaleString() 
       };
     });
-  }, [stockHistory, stockSymbol, selectedInterval]);
+  }, [currentChartData]); 
 
-  // UI Derived Values
+  // Derived Values
   const currentPrice = selectedStock?.price || 0;
   const priceChangePercent = selectedStock?.changePercent || 0;
   const isPositive = priceChangePercent >= 0;
-  const lastUpdated = selectedStock?.lastUpdated
-    ? new Date(selectedStock.lastUpdated).toLocaleTimeString()
-    : "--:--";
-
-  // UPDATED: Added "1H" to the buttons
-  const intervals = ["1H", "1D", "1W", "1M", "1Y"];
-
-  // Cost Calculations
-  const estimatedCost = Number(tradeQty) * currentPrice;
-  const estimatedFee = estimatedCost * 0.001; // 0.1% fee
-  const totalCost = estimatedCost + estimatedFee;
+  const totalCost = (Number(tradeQty) * currentPrice) * 1.001; 
   const canAfford = cashBalance >= totalCost;
 
-  // Global Loading State (for page)
+  // Loading Screen
   if (stockLoading && !selectedStock) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm font-medium text-muted-foreground animate-pulse">
-            Loading Market Data...
-          </p>
-        </div>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground animate-pulse">Connecting to live market...</p>
       </div>
     );
   }
@@ -185,225 +121,151 @@ export default function StockPage() {
     <TooltipProvider>
       <div className="min-h-screen bg-background flex flex-col">
         
-        {/* --- HEADER --- */}
-        <header className="border-b bg-card px-6 py-3 flex items-center justify-between shadow-sm z-10">
-          <div className="flex items-center gap-6">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-xl font-bold gap-2 px-2 hover:bg-muted/50">
-                  {selectedStock?.symbol || stockSymbol}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <Label className="px-2 py-1.5 text-xs text-muted-foreground">Quick Select</Label>
-                {["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA"].map((s) => (
-                  <DropdownMenuItem key={s} onClick={() => router.push(`/stocks/${s}`)}>
-                    {s}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+        {/* --- STICKY HEADER --- */}
+        <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md px-4 py-3">
+          <div className="max-w-[1920px] mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 lg:gap-4">
+              <Button variant="ghost" size="icon" onClick={() => router.back()} className="lg:hidden">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:gap-6">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-xl lg:text-3xl font-black p-0 h-auto hover:bg-transparent flex items-center gap-2">
+                      {stockSymbol} <ChevronDown className="h-5 w-5 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA"].map((s) => (
+                      <DropdownMenuItem key={s} onClick={() => router.push(`/stocks/${s}`)}>{s}</DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold tracking-tight">
-                ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <Badge 
-                variant="outline"
-                className={`flex items-center gap-1 font-mono text-sm border-none px-2 py-0.5 ${
-                  isPositive 
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
-                    : "bg-red-500/10 text-red-600 dark:text-red-400"
-                }`}
-              >
-                {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {Math.abs(priceChangePercent).toFixed(2)}%
-              </Badge>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex bg-muted/50 p-1 rounded-lg">
-              {intervals.map((interval) => (
-                <Button
-                  key={interval}
-                  variant={selectedInterval === interval ? "outline" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedInterval(interval)}
-                  className={`h-7 px-3 text-xs font-medium rounded-md transition-all ${
-                    selectedInterval === interval 
-                      ? "shadow-sm bg-background text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {interval}
-                </Button>
-              ))}
+                <div className="flex items-center gap-3">
+                  <span className="text-xl lg:text-2xl font-mono font-bold">₹{currentPrice.toFixed(2)}</span>
+                  <Badge variant={isPositive ? "default" : "destructive"} className="text-sm font-bold px-2 py-0.5">
+                     {isPositive ? "+" : ""}{priceChangePercent.toFixed(2)}%
+                  </Badge>
+                  <div className="flex items-center gap-1.5 ml-2 text-xs font-bold text-primary animate-pulse">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    LIVE MARKET
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* Wallet Display */}
-            <div className="flex flex-col items-end text-right px-2 min-w-[100px]">
-              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
-                <Wallet className="w-3 h-3" /> Balance
-              </span>
-              <span className="font-mono text-sm font-semibold text-primary">
-                ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <Separator orientation="vertical" className="h-6" />
-
-            <div className="flex flex-col items-end text-[10px] text-muted-foreground leading-tight">
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> UPDATED</span>
-              <span className="font-mono">{lastUpdated}</span>
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">Available Balance</span>
+                <span suppressHydrationWarning className="text-lg font-mono font-bold text-primary">
+                  ₹{cashBalance.toLocaleString()}
+                </span>
+              </div>
+              <Separator orientation="vertical" className="h-8 hidden sm:block" />
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Wallet className="h-5 w-5 text-primary" />
+              </div>
             </div>
           </div>
         </header>
 
-        {/* --- MAIN CONTENT --- */}
-        <div className="flex flex-1 overflow-hidden">
+        {/* --- MAIN LAYOUT --- */}
+        <main className="flex-1 flex flex-col lg:flex-row max-w-[1920px] w-full mx-auto">
           
-          {/* LEFT: CHART */}
-          <div className="flex-1 p-4 md:p-6 overflow-hidden bg-gradient-to-b from-background to-muted/20">
-            <Card className="h-full border shadow-sm bg-card/50 backdrop-blur-sm flex flex-col">
-              <CardContent className="p-6 h-full flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold tracking-tight">Price Performance</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedStock?.name} • {selectedInterval} View
-                    </p>
+          {/* LEFT: BIG CHART SECTION */}
+          <div className="flex-1 p-4 lg:p-6 flex flex-col min-w-0">
+            {/* 🚀 MASSIVE CHART CONTAINER */}
+            <div className="flex-1 min-h-[500px] lg:min-h-[700px] xl:min-h-[850px] w-full relative bg-card/30 rounded-3xl border border-border/50 p-4 lg:p-8 shadow-inner">
+               {formattedChartData.length > 0 ? (
+                  <AreaChartComponent 
+                    data={formattedChartData} 
+                    dataKey="value" 
+                    name="Price"
+                    positiveColor={isPositive ? "#10b981" : "#ef4444"} 
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    {stockLoading ? <Loader2 className="animate-spin h-8 w-8" /> : "Waiting for market tick..."}
+                  </div>
+                )}
+            </div>
+          </div>
+
+          {/* RIGHT: TRADING PANEL */}
+          <aside className="w-full lg:w-[400px] xl:w-[450px] border-t lg:border-t-0 lg:border-l bg-card/50 backdrop-blur-sm p-6 lg:p-8 space-y-8 flex-shrink-0">
+            <section>
+              <div className="flex items-center gap-2 mb-6">
+                 <Activity className="h-5 w-5 text-muted-foreground" />
+                 <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Quick Trade</h3>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <Label className="text-sm font-bold">Quantity</Label>
+                    <span className="text-xs text-muted-foreground self-center">Shares to {tradeQty || 0}</span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={tradeQty}
+                      onChange={(e) => setTradeQty(e.target.value)}
+                      className="text-3xl font-black h-20 bg-background border-2 focus-visible:ring-primary pl-6"
+                    />
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">QTY</span>
                   </div>
                 </div>
-                
-                <div className="flex-1 min-h-0 w-full relative">
-                  {stockLoading && chartData.length === 0 ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : chartData.length > 0 ? (
-                    <AreaChartComponent 
-                      data={chartData} 
-                      dataKey="value" 
-                      name="Price"
-                      positiveColor="var(--accent)" 
-                      className="h-full w-full"
-                    />
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3 border-2 border-dashed rounded-xl border-muted/50">
-                      <AlertCircle className="h-8 w-8 opacity-20" />
-                      <p className="text-sm">No data available for {selectedInterval}</p>
+
+                <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-border/50">
+                  <div className="flex justify-between text-base">
+                    <span className="text-muted-foreground">Current Price</span>
+                    <span className="font-mono font-bold">₹{currentPrice.toFixed(2)}</span>
+                  </div>
+                  <Separator className="bg-border/50" />
+                  <div className="flex justify-between text-lg">
+                    <span className="text-muted-foreground font-bold">Total Cost</span>
+                    <span className={`font-mono font-black ${!canAfford ? "text-red-500" : "text-primary"}`}>
+                      ₹{totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  {!canAfford && (
+                    <div className="flex items-center justify-end gap-2 text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-xs font-bold">Insufficient funds</span>
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* RIGHT: TRADING SIDEBAR */}
-          <div className="w-80 xl:w-96 border-l bg-card flex flex-col h-full shadow-xl z-20">
-            {/* Header */}
-            <div className="p-6 xl:p-8 border-b bg-muted/10">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">About Asset</span>
-              <h2 className="text-2xl xl:text-3xl font-black mt-2 tracking-tight line-clamp-1" title={selectedStock?.name}>
-                {selectedStock?.name || stockSymbol}
-              </h2>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="rounded-sm font-normal text-xs px-2">
-                  {selectedStock?.sector || "Technology"}
-                </Badge>
-                <span className="text-xs text-muted-foreground">•</span>
-                <span className="text-xs text-muted-foreground font-mono">NASDAQ</span>
               </div>
+            </section>
+
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <Button 
+                onClick={() => handleTrade("BUY")}
+                disabled={tradeLoading || !canAfford}
+                className="h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xl shadow-lg shadow-emerald-500/20"
+              >
+                {tradeLoading ? <Loader2 className="animate-spin" /> : "BUY NOW"}
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => handleTrade("SELL")}
+                disabled={tradeLoading}
+                className="h-16 rounded-2xl border-2 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500 font-black text-xl transition-all"
+              >
+                SELL NOW
+              </Button>
             </div>
 
-            {/* Form */}
-            <div className="flex-1 p-6 xl:p-8 space-y-6 overflow-y-auto">
-              
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</Label>
-                  <span className={`text-[10px] font-mono ${!canAfford ? "text-red-500" : "text-muted-foreground"}`}>
-                    Avail: ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="relative group">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value={tradeQty}
-                    onChange={(e) => setTradeQty(e.target.value)}
-                    disabled={tradeLoading}
-                    className="text-2xl font-bold h-14 pl-4 pr-16 border-2 focus-visible:ring-2 focus-visible:ring-offset-0 transition-all"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm pointer-events-none group-focus-within:text-primary">
-                    QTY
-                  </div>
-                </div>
+            {tradeError && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex gap-3 items-center text-red-500 text-sm font-bold">
+                <AlertCircle className="h-5 w-5" /> 
+                <span>{tradeError}</span>
               </div>
-
-              {/* Cost Breakdown */}
-              <div className="p-5 rounded-xl bg-muted/40 border border-border/50 space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Price per share</span>
-                  <span className="font-mono">${currentPrice.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Est. Fee (0.1%)</span>
-                  <span className="font-mono text-xs text-muted-foreground">
-                    ${estimatedFee.toFixed(2)}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center pt-1">
-                  <span className="font-bold text-sm">Total Cost</span>
-                  <div className="text-right">
-                    <span className="text-xl font-bold tracking-tight text-primary block">
-                      ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    {!canAfford && (
-                      <span className="text-[10px] text-red-500 font-bold block">Insufficient Funds</span>
-                    )}
-                  </div>
-                </div>
-                {/* Error Message Display */}
-                {tradeError && (
-                   <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded border border-red-500/20 mt-2">
-                     {tradeError}
-                   </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="grid gap-3 pt-4">
-                <Button 
-                  size="lg" 
-                  className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wide shadow-md shadow-emerald-900/10 active:scale-[0.98] transition-all"
-                  disabled={tradeLoading || !canAfford || stockLoading}
-                  onClick={() => handleTrade("BUY")}
-                >
-                  {tradeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {tradeLoading ? "PROCESSING..." : `BUY ${stockSymbol}`}
-                </Button>
-
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="h-12 border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:border-red-800 font-bold tracking-wide active:scale-[0.98] transition-all"
-                  disabled={tradeLoading || stockLoading}
-                  onClick={() => handleTrade("SELL")}
-                >
-                  {tradeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {tradeLoading ? "PROCESSING..." : `SELL ${stockSymbol}`}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+            )}
+          </aside>
+        </main>
       </div>
     </TooltipProvider>
   );

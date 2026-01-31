@@ -174,7 +174,7 @@ const achievementSlice = createSlice({
 
             // 🎉 TRIGGER CONFETTI HERE
             // Assuming your achievement type has a 'rarity' field (e.g., 'common', 'legendary')
-            celebrateAchievement(achievement.rarity || "common");
+            celebrateAchievement(achievement.rarity || "legendary");
           });
         }
 

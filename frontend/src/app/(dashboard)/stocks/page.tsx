@@ -144,7 +144,7 @@ export default function MarketplacePage() {
                         <div className="flex items-end justify-between">
                           <div>
                             <p className="text-xl font-bold">
-                              ${stock.currentPrice.toFixed(2)}
+                              ₹{stock.currentPrice.toFixed(2)}
                             </p>
                             <p
                               className={`text-xs font-medium ${stock.changePercent >= 0 ? "text-green-500" : "text-red-500"}`}
@@ -187,7 +187,7 @@ export default function MarketplacePage() {
                         <div className="flex items-center gap-6">
                           <div className="text-right">
                             <p className="font-bold">
-                              ${stock.currentPrice.toFixed(2)}
+                              ₹{stock.currentPrice.toFixed(2)}
                             </p>
                             <p
                               className={`text-xs ${stock.changePercent >= 0 ? "text-green-500" : "text-red-500"}`}

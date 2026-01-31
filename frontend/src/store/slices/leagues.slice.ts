@@ -20,7 +20,6 @@ export const fetchActiveLeagues = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await leaguesApi.getActiveLeagues();
-      console.log("The response of active leagues is:", response.data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch leagues");
@@ -33,7 +32,6 @@ export const fetchLeaderboard = createAsyncThunk(
   async (leagueId: string, { rejectWithValue }) => {
     try {
       const response = await leaguesApi.getLeaderboard(leagueId);
-      console.log("The leaderboard is:", response.data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch leaderboard");

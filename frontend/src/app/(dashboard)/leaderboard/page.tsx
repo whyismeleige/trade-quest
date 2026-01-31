@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
 
   // Helper to format currency
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val)
   }
 
   // Helper to safely get initials

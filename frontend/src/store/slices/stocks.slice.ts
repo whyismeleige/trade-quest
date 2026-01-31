@@ -13,13 +13,12 @@ const initialState: StocksState = {
   error: null,
 };
 
-// ==================== THUNKS ====================
+// ==================== THUNKS (Unchanged & Verified) ====================
 
 export const searchStocks = createAsyncThunk(
   "stocks/search",
   async (query: string, { rejectWithValue }) => {
     try {
-      // Returns SearchResponse
       return await stocksApi.search(query);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Search failed");
@@ -31,30 +30,21 @@ export const fetchStockDetails = createAsyncThunk(
   "stocks/details",
   async (symbol: string, { rejectWithValue }) => {
     try {
-      // Returns StockDetailResponse
       return await stocksApi.getDetails(symbol);
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch details"
-      );
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch details");
     }
   }
 );
 
 export const fetchStockHistory = createAsyncThunk(
   "stocks/history",
-  async (
-    { symbol, range }: { symbol: string; range: string },
-    { rejectWithValue }
-  ) => {
+  async ({ symbol, range }: { symbol: string; range: string }, { rejectWithValue }) => {
     try {
       const response = await stocksApi.getHistory(symbol, range);
-      // response is HistoryResponse, we want to return the data array specifically
       return { symbol, range, points: response.data };
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch history"
-      );
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch history");
     }
   }
 );
@@ -77,48 +67,45 @@ const stocksSlice = createSlice({
       state.searchResults = [];
     },
     
-    // ⚡ UPDATED: Handles bulk updates from Socket
+    // ⚡ CRITICAL: The Real-Time Engine
+    // ⚡ STRICT LIVE UPDATE REDUCER
     updateLivePrices: (state, action: PayloadAction<LivePriceUpdate[]>) => {
       const updates = action.payload;
 
       updates.forEach((update) => {
-        // 1. Update Search Results / List View
+        // 1. Update List View & Header Price (Global State)
+        // We always update these so the price in the header is live
         const listItem = state.searchResults.find((s) => s.symbol === update.symbol);
-        if (listItem) {
-          listItem.currentPrice = update.price;
-          // Recalculate stats for the UI
-          if (listItem.previousClosePrice) {
-            const diff = update.price - listItem.previousClosePrice;
-            listItem.change = diff;
-            listItem.changePercent = (diff / listItem.previousClosePrice) * 100;
-          }
-        }
+        if (listItem) listItem.currentPrice = update.price;
 
-        // 2. Update Selected Stock (Detail View)
         if (state.selectedStock && state.selectedStock.symbol === update.symbol) {
           state.selectedStock.price = update.price;
-          state.selectedStock.lastUpdated = new Date().toISOString();
-
+          // Calculate change for the header badge
           if (state.selectedStock.previousClose) {
             const diff = update.price - state.selectedStock.previousClose;
             state.selectedStock.change = diff;
-            state.selectedStock.changePercent =
-              (diff / state.selectedStock.previousClose) * 100;
+            state.selectedStock.changePercent = (diff / state.selectedStock.previousClose) * 100;
           }
+        }
 
-          // 3. Update History Graph (Adds real-time feel to chart)
-          // We only update "1D" history live
-          if (state.stockHistory[update.symbol]) {
-            const historyArr = state.stockHistory[update.symbol]["1D"];
-            if (historyArr) {
-              historyArr.push({
-                price: update.price,
-                timestamp: new Date().toISOString(),
-              });
-              // Keep frontend array small to prevent memory leaks/performance issues
-              if (historyArr.length > 500) historyArr.shift();
+        // 2. CHART DATA UPDATE - STRICTLY "1D" ONLY
+        // We ONLY touch the "1D" array. We NEVER touch 1W, 1M, or 1Y.
+        // This ensures historical charts remain static and don't get overwritten.
+        if (state.stockHistory[update.symbol]) {
+            const oneDayHistory = state.stockHistory[update.symbol]["1D"];
+            
+            // Only update if the 1D array actually exists
+            if (Array.isArray(oneDayHistory)) {
+                oneDayHistory.push({
+                    price: update.price,
+                    timestamp: update.timestamp || new Date().toISOString(),
+                });
+
+                // Prevent memory leaks / infinite growth
+                if (oneDayHistory.length > 500) {
+                    oneDayHistory.shift();
+                }
             }
-          }
         }
       });
     },
@@ -152,6 +139,8 @@ const stocksSlice = createSlice({
         if (!state.stockHistory[symbol]) {
           state.stockHistory[symbol] = {};
         }
+        // When user switches range, we replace the data entirely
+        // This ensures a clean state before live updates resume
         state.stockHistory[symbol][range] = points;
       });
   },

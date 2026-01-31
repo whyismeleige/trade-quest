@@ -154,7 +154,7 @@ function AuthPage() {
       
       router.push("/dashboard");
     } catch (error) {
-      console.log("The error is ", error);
+      
     } finally {
       setLoading(false);
     }

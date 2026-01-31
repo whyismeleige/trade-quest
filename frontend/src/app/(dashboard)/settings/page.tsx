@@ -55,22 +55,24 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
+import { useAppSelector } from "@/store/hooks"
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [saving, setSaving] = useState(false)
+  const { user } = useAppSelector((state) => state.auth);
 
   // Profile state
   const [profile, setProfile] = useState({
-    name: "Piyush",
-    username: "piyush_trades",
-    email: "piyush@example.com",
+    name: user?.name || "User",
+    username: user?.name || "username",
+    email: user?.email|| "user@email.com",
     phone: "+1 (555) 123-4567",
     bio: "Passionate trader focused on tech stocks and swing trading. Learning every day! 📈",
     location: "New York, USA",
-    website: "https://piyush.dev",
+    website: "https://user.dev",
   })
 
   // Notification settings

@@ -227,7 +227,7 @@ export default function TradeHistoryPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Total Volume (Page)</p>
-              <p className="text-2xl font-bold">${stats.vol.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold">₹{stats.vol.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
             </div>
           </CardContent>
         </Card>
@@ -242,7 +242,7 @@ export default function TradeHistoryPage() {
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Avg. Trade Size</p>
               <p className="text-2xl font-bold">
-                ${trades.length > 0 ? (stats.vol / trades.length).toLocaleString('en-US', { maximumFractionDigits: 0 }) : 0}
+                ₹{trades.length > 0 ? (stats.vol / trades.length).toLocaleString('en-US', { maximumFractionDigits: 0 }) : 0}
               </p>
             </div>
           </CardContent>
@@ -379,9 +379,9 @@ export default function TradeHistoryPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">{trade.quantity}</TableCell>
-                    <TableCell className="text-right">${trade.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">₹{trade.price.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-medium">
-                      ${trade.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ₹{trade.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

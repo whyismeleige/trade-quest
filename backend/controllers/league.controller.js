@@ -21,16 +21,16 @@ exports.getLeaderboard = asyncHandler(async (req, res) => {
   // Fetch entries and populate usernames
   let entries = await LeagueEntry.find({ leagueId: id })
     .populate("userId") // Assuming User model has 'username'
-
+  
   // Calculate dynamic P&L
   const leaderboard = entries.map((entry) => {
     // Note: In a real app, 'currentValue' should be updated by a background job
     // or by the portfolio controller whenever a user acts.
     // Here we use the stored currentValue.
     const pnl = entry.currentValue - entry.startingValue;
+
     return {
-      userId: entry.userId._id,
-      username: entry.userId.name,
+      username: entry.userId?.name ?? "User",
       score: pnl,
       rank: 0, // Will assign below
     };

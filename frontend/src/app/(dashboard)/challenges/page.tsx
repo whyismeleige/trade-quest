@@ -169,7 +169,7 @@ const weeklyChallenges: Challenge[] = [
   {
     id: "weekly-1",
     title: "Trading Volume King",
-    description: "Execute trades worth $50,000 total this week",
+    description: "Execute trades worth ₹50,000 total this week",
     xpReward: 500,
     coinReward: 100,
     progress: 32500,

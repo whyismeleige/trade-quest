@@ -2,8 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const intializeSocket = require("./sockets");
 const { createServer } = require("node:http");
+
+// ⚠️ CHANGE THIS PATH: If your folder is named 'socket' (singular), use "./socket"
+const initializeSocket = require("./sockets"); 
 
 const connectDB = require("./database/mongoDB");
 const errorHandler = require("./middleware/errorHandler");
@@ -15,13 +17,29 @@ const MarketSimulator = require("./services/simulator.service");
 const app = express();
 const server = createServer(app);
 
-// 2. INITIALIZE SOCKETS
-const io = intializeSocket(server);
-app.set("io", io); // Make io accessible in controllers
-
 const PORT = process.env.PORT || 8080;
 
-// Routes
+// 2. MIDDLEWARE
+app.use(
+  cors({
+    origin: [
+      "https://trade-quest.piyushbuilds.me",
+      "https://trade-quest-umber.vercel.app", 
+      "http://localhost:3000"
+    ],
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// 3. INITIALIZE SOCKETS
+// We do this BEFORE routes so we can attach 'io' to the app if needed
+const io = initializeSocket(server);
+app.set("io", io); 
+
+// 4. ROUTES
 const authRoutes = require("./routes/auth.routes");
 const stocksRoutes = require("./routes/stocks.routes");
 const tradeRoutes = require("./routes/trade.routes");
@@ -29,18 +47,6 @@ const leagueRoutes = require("./routes/league.routes");
 const portfolioRoutes = require("./routes/portfolio.routes");
 const achievementRoutes = require("./routes/achievement.routes");
 
-app.use(
-  cors({
-    origin: ["https://trade-quest.piyushbuilds.me","https://trade-quest-umber.vercel.app", "http://localhost:3000"],
-    credentials: true,
-  })
-);
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/stocks", stocksRoutes);
 app.use("/api/trades", tradeRoutes);
@@ -56,6 +62,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+// 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",
@@ -64,6 +71,7 @@ app.use((req, res) => {
   });
 });
 
+// Global Error Handler
 app.use(errorHandler);
 
 // ==========================================
@@ -71,7 +79,7 @@ app.use(errorHandler);
 // ==========================================
 const startServer = async () => {
   try {
-    // 1. Connect to Database (Await it to ensure connection exists)
+    // 1. Connect to Database
     await connectDB();
     console.log("✅ Database connected successfully");
 
@@ -79,11 +87,10 @@ const startServer = async () => {
     initScheduledJobs();
 
     // 3. START MARKET SIMULATOR
-    // We pass 'io' so it can emit price updates
+    // Pass 'io' so the simulator can broadcast updates
     const simulator = new MarketSimulator(io);
     await simulator.init(); 
-    console.log("✅ Market Simulator started");
-
+    
     // 4. Start Listening
     server.listen(PORT, () => {
       console.log(`✅ Server running on PORT: ${PORT}`);

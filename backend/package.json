@@ -14,6 +14,7 @@
     "@aws-sdk/client-ses": "^3.978.0",
     "@aws-sdk/s3-request-presigner": "^3.978.0",
     "@elevenlabs/elevenlabs-js": "^2.33.0",
+    "@faker-js/faker": "^10.2.0",
     "@google/genai": "^1.38.0",
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.4",

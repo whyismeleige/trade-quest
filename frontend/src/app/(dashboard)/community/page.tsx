@@ -107,7 +107,7 @@ const posts: Post[] = [
       badge: "Diamond",
       isVerified: true,
     },
-    content: "Just closed my $NVDA position after holding for 3 weeks. The AI rally is real! 🚀 Remember: patience pays. Don't chase, wait for your setups.",
+    content: "Just closed my ₹NVDA position after holding for 3 weeks. The AI rally is real! 🚀 Remember: patience pays. Don't chase, wait for your setups.",
     trade: {
       symbol: "NVDA",
       action: "sell",

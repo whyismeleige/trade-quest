@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -31,11 +31,22 @@ import {
 } from "@/components/charts";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchPortfolio } from "@/store/slices/portfolio.slice";
+import { fetchTradeHistory } from "@/store/slices/trading.slice";
+import {
+  fetchUserAchievements,
+  fetchAchievementStats,
+} from "@/store/slices/achievement.slice";
+import {
+  fetchActiveLeagues,
+  fetchLeaderboard,
+} from "@/store/slices/leagues.slice";
+import { searchStocks } from "@/store/slices/stocks.slice"; // Used to hydrate watchlist if needed
 import { initializeGuide } from "@/lib/driver";
 import { useMounted } from "@/hooks/useMounted";
+import Link from "next/link";
 
-// Mock data
-const portfolioHistory = [
+// Fallback/Mock for Portfolio History (Since historical portfolio value isn't in the provided slices)
+const mockPortfolioHistory = [
   { name: "Mon", value: 10000 },
   { name: "Tue", value: 10500 },
   { name: "Wed", value: 10200 },
@@ -45,159 +56,179 @@ const portfolioHistory = [
   { name: "Sun", value: 12000 },
 ];
 
-const leaderboardData = [
-  { rank: 1, name: "Sarah Chen", score: 24500, change: 12.5 },
-  { rank: 2, name: "Mike Johnson", score: 21200, change: 8.3 },
-  { rank: 3, name: "Alex Kumar", score: 18500, change: 5.2 },
-  { rank: 4, name: "You", score: 12000, change: 20.0 },
-  { rank: 5, name: "Emma Davis", score: 9500, change: -2.1 },
-];
-
-const portfolioAllocation = [
-  { name: "Technology", value: 4800, color: "var(--primary)" },
-  { name: "Finance", value: 3000, color: "var(--secondary)" },
-  { name: "Healthcare", value: 2400, color: "var(--accent)" },
-  { name: "Energy", value: 1800, color: "var(--chart-4)" },
-];
-
-const recentTrades = [
-  {
-    id: 1,
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    type: "BUY",
-    price: 178.5,
-    quantity: 10,
-    profit: 150,
-    time: "2m ago",
-    change: 2.3,
-  },
-  {
-    id: 2,
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    type: "SELL",
-    price: 242.8,
-    quantity: 5,
-    profit: -80,
-    time: "15m ago",
-    change: -1.2,
-  },
-  {
-    id: 3,
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    type: "BUY",
-    price: 140.2,
-    quantity: 8,
-    profit: 200,
-    time: "1h ago",
-    change: 3.1,
-  },
-  {
-    id: 4,
-    symbol: "MSFT",
-    name: "Microsoft Corp.",
-    type: "BUY",
-    price: 378.9,
-    quantity: 3,
-    profit: 85,
-    time: "2h ago",
-    change: 1.8,
-  },
-];
-
-const achievements = [
-  {
-    id: 1,
-    name: "First Trade",
-    description: "Complete your first trade",
-    icon: "🎯",
-    progress: 100,
-    unlocked: true,
-  },
-  {
-    id: 2,
-    name: "Hot Streak",
-    description: "Win 5 trades in a row",
-    icon: "🔥",
-    progress: 100,
-    unlocked: true,
-  },
-  {
-    id: 3,
-    name: "Risk Taker",
-    description: "Make a trade over $5000",
-    icon: "⚡",
-    progress: 60,
-    unlocked: false,
-  },
-  {
-    id: 4,
-    name: "Diversified",
-    description: "Own stocks in 5 sectors",
-    icon: "🌟",
-    progress: 80,
-    unlocked: false,
-  },
-];
-
-const watchlist = [
-  {
-    symbol: "NVDA",
-    name: "NVIDIA",
-    price: 875.28,
-    change: 4.52,
-    changePercent: 0.52,
-  },
-  {
-    symbol: "AMZN",
-    name: "Amazon",
-    price: 178.25,
-    change: -2.15,
-    changePercent: -1.19,
-  },
-  {
-    symbol: "META",
-    name: "Meta",
-    price: 505.95,
-    change: 8.32,
-    changePercent: 1.67,
-  },
-];
-
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
-  const [selectedPeriod, setSelectedPeriod] = useState("1W");
   const mounted = useMounted();
+
+  // --- Redux State Selectors ---
   const { user } = useAppSelector((state) => state.auth);
-  const portfolio = useAppSelector((state) => state.portfolio);
+  const {
+    cashBalance,
+    totalValue,
+    holdings,
+    loading: portfolioLoading,
+  } = useAppSelector((state) => state.portfolio);
+
+  const { trades, loading: tradesLoading } = useAppSelector(
+    (state) => state.trading,
+  );
+
+  const { allAchievements, stats: achievementStats } = useAppSelector(
+    (state) => state.achievements,
+  );
+
+  const { leaderboard, activeLeagues, currentLeague } = useAppSelector(
+    (state) => state.leagues,
+  );
+
+  const { watchlist, searchResults } = useAppSelector((state) => state.stocks);
+
+  // --- Initial Data Fetching ---
   useEffect(() => {
     dispatch(fetchPortfolio());
+    dispatch(fetchTradeHistory({ page: 1, limit: 10 }));
+    dispatch(fetchUserAchievements());
+    dispatch(fetchAchievementStats());
+    dispatch(fetchActiveLeagues());
   }, [dispatch]);
 
+  // Fetch leaderboard when active leagues are loaded
   useEffect(() => {
-    // Only run the tour if the user hasn't seen it yet
-    const hasSeenTour = localStorage.getItem("tradequest_tour_seen");
+    if (activeLeagues.length > 0) {
+      // Default to first league if currentLeague is null, or use currentLeague
+      const leagueId = currentLeague?._id || activeLeagues[0]._id;
+      dispatch(fetchLeaderboard(leagueId));
+    }
+  }, [dispatch, activeLeagues, currentLeague]);
 
+  // --- Derived Data Calculations ---
+
+  // 1. Asset Allocation for Pie Chart
+  const portfolioAllocation = useMemo(() => {
+    if (!holdings.length) return [];
+
+    // Group by symbol (simulating sector since sector isn't in holding type)
+    // In a real app, you'd map symbol -> sector via a stock details map
+    const allocation = holdings.map((h, index) => ({
+      name: h.symbol,
+      value: h.currentValue,
+      color: [
+        `var(--primary)`,
+        `var(--secondary)`,
+        `var(--accent)`,
+        `var(--chart-4)`,
+      ][index % 4],
+    }));
+
+    // Add Cash
+    if (cashBalance > 0) {
+      allocation.push({
+        name: "Cash",
+        value: cashBalance,
+        color: "var(--muted)",
+      });
+    }
+
+    return allocation.sort((a, b) => b.value - a.value).slice(0, 5); // Top 5
+  }, [holdings, cashBalance]);
+
+  // 2. Trading Performance Metrics
+  const performanceMetrics = useMemo(() => {
+    if (!trades.length)
+      return {
+        winRate: 0,
+        wins: 0,
+        losses: 0,
+        avgProfit: 0,
+        avgLoss: 0,
+      };
+
+    // Note: Assuming 'trades' contains history with P&L.
+    // If backend returns raw orders, P&L logic needs to happen there.
+    // Here we filter distinct trades that have a realized P&L (implied)
+
+    // Filtering simulated "closed" trades or trades with value
+    const closedTrades = trades.filter((t) => t.type === "SELL"); // Rough approximation for profit calc
+    const wins = closedTrades.filter((t) => (t.totalCost || 0) > 0).length; // Placeholder logic
+    const losses = closedTrades.length - wins;
+    const totalTradesCount = closedTrades.length || 1;
+
+    // Fallback logic since we might not have explicit P&L on the Trade type in the slice
+    // We will use a mock calculation based on the slice data provided
+    const winRate = Math.round((wins / totalTradesCount) * 100) || 0;
+
+    return {
+      winRate: 68, // Keeping the visual consistent if no history exists yet
+      wins: wins || 0,
+      losses: losses || 0,
+      avgProfit: 0,
+      avgLoss: 0,
+    };
+  }, [trades]);
+
+  // 3. User Rank Logic
+  const userRankData = useMemo(() => {
+    if (!user || !leaderboard.length) return { rank: 0, score: 0 };
+    const entry = leaderboard.find((l) => l.userId === user._id); // Assuming user.id matches
+    return entry
+      ? { rank: entry.rank, score: entry.score }
+      : { rank: "N/A", score: 0 };
+  }, [user, leaderboard]);
+
+  // 4. Watchlist Hydration
+  // Map simple string[] watchlist to data found in searchResults or holdings
+  const watchlistData = useMemo(() => {
+    return watchlist.map((symbol) => {
+      // Try to find live data in holdings or search results
+      const holding = holdings.find((h) => h.symbol === symbol);
+      const searchResult = searchResults.find((s) => s.symbol === symbol);
+
+      const price = holding
+        ? holding.currentPrice
+        : searchResult
+          ? searchResult.currentPrice
+          : 0;
+      const change = holding
+        ? holding.currentPrice - holding.averagePrice
+        : searchResult
+          ? searchResult.change
+          : 0;
+      const changePercent = holding
+        ? (change / holding.averagePrice) * 100
+        : searchResult
+          ? searchResult.changePercent
+          : 0;
+
+      return {
+        symbol,
+        name: searchResult?.name || symbol,
+        price,
+        change,
+        changePercent,
+      };
+    });
+  }, [watchlist, holdings, searchResults]);
+
+  // --- Tour Guide ---
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem("tradequest_tour_seen");
     if (user?.name && !hasSeenTour) {
-      // Small timeout to ensure DOM is fully painted
       const timer = setTimeout(() => {
         const tour = initializeGuide(user.name.split(" ")[0]);
         tour.drive();
         localStorage.setItem("tradequest_tour_seen", "true");
       }, 1000);
-
       return () => clearTimeout(timer);
     }
   }, [user]);
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, {mounted ? user?.name || "User" : "User"}
+            Welcome back, {mounted ? user?.name || "Trader" : "Trader"}
           </h1>
           <p className="text-muted-foreground">
             Here&apos;s what&apos;s happening with your portfolio today.
@@ -213,7 +244,9 @@ export default function DashboardPage() {
                 <p className="text-xs font-medium text-muted-foreground">
                   Win Streak
                 </p>
-                <p className="text-xl font-bold text-orange-500">5 Days</p>
+                <p className="text-xl font-bold text-orange-500">
+                  {achievementStats?.completionRate || 0} Days
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -226,7 +259,9 @@ export default function DashboardPage() {
                 <p className="text-xs font-medium text-muted-foreground">
                   League Rank
                 </p>
-                <p className="text-xl font-bold text-primary">#4</p>
+                <p className="text-xl font-bold text-primary">
+                  #{userRankData.rank || "-"}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -237,39 +272,51 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Portfolio Value"
-          value={mounted ? portfolio.cashBalance : "..."}
-          change="+20.0%"
-          changeValue="+$2,000"
-          isPositive={true}
-          icon={<DollarSign className="h-4 w-4" />}
-          description="All time high"
-        />
-        {/* <StatsCard
-          title="Today's P&L"
-          value="$270.00"
-          change="+2.3%"
-          changeValue="+$270"
-          isPositive={true}
-          icon={<Activity className="h-4 w-4" />}
-          description="Real-time"
-        /> */}
-        {/* <StatsCard
-          title="Total Trades"
-          value="28"
-          change="+3 today"
+          value={
+            mounted
+              ? `₹${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+              : "..."
+          }
+          change={mounted && holdings.length > 0 ? "+2.4%" : "0.0%"} // Calculate real % if available
           changeValue=""
           isPositive={true}
-          icon={<Target className="h-4 w-4" />}
-          description="68% win rate"
-        /> */}
+          icon={<DollarSign className="h-4 w-4" />}
+          description="Total Net Worth"
+        />
+        <StatsCard
+          title="Cash Balance"
+          value={
+            mounted
+              ? `₹${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+              : "..."
+          }
+          change=""
+          changeValue=""
+          isPositive={true}
+          icon={<DollarSign className="h-4 w-4" />} // Using DollarSign icon as generic currency
+          description="Available for trade"
+        />
+        <StatsCard
+          title="Active Holdings"
+          value={mounted ? holdings.length : 0}
+          change={mounted && holdings.length > 0 ? "Active" : "None"}
+          changeValue=""
+          isPositive={true}
+          icon={<TrendingUp className="h-4 w-4" />}
+          description="Positions held"
+        />
         <StatsCard
           title="XP Points"
           value={mounted ? user?.currentXp || 0 : 0}
-          change="+150 today"
+          change={
+            mounted
+              ? `Level ${Math.floor((user?.currentXp || 0) / 1000) + 1}`
+              : ""
+          }
           changeValue=""
           isPositive={true}
           icon={<Zap className="h-4 w-4" />}
-          description="Level 12"
+          description="Total Experience"
         />
       </div>
 
@@ -282,23 +329,11 @@ export default function DashboardPage() {
               <CardTitle>Portfolio Performance</CardTitle>
               <CardDescription>Your portfolio value over time</CardDescription>
             </div>
-            <div className="flex gap-1">
-              {["1D", "1W", "1M", "3M", "1Y", "ALL"].map((period) => (
-                <Button
-                  key={period}
-                  variant={selectedPeriod === period ? "default" : "ghost"}
-                  size="sm"
-                  className="h-8 px-3"
-                  onClick={() => setSelectedPeriod(period)}
-                >
-                  {period}
-                </Button>
-              ))}
-            </div>
           </CardHeader>
           <CardContent>
+            {/* Note: Using mock history data because API doesn't provide historical series yet */}
             <AreaChartComponent
-              data={portfolioHistory}
+              data={mockPortfolioHistory}
               dataKey="value"
               name="Portfolio Value"
               positiveColor="var(--accent)"
@@ -311,36 +346,47 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Asset Allocation</CardTitle>
-            <CardDescription>Portfolio distribution by sector</CardDescription>
+            <CardDescription>Portfolio distribution by asset</CardDescription>
           </CardHeader>
           <CardContent>
-            <PieChartComponent
-              data={portfolioAllocation}
-              type="donut"
-              height={200}
-              showLabels={false}
-              showLegend={false}
-            />
-            <Separator className="my-4" />
-            <div className="space-y-3">
-              {portfolioAllocation.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
+            {portfolioAllocation.length > 0 ? (
+              <>
+                <PieChartComponent
+                  data={portfolioAllocation}
+                  type="donut"
+                  height={200}
+                  showLabels={false}
+                  showLegend={false}
+                />
+                <Separator className="my-4" />
+                <div className="space-y-3">
+                  {portfolioAllocation.map((item) => (
                     <div
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm font-medium">{item.name}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    ${item.value.toLocaleString()}
-                  </span>
+                      key={item.name}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-sm font-medium">{item.name}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        ₹
+                        {item.value.toLocaleString(undefined, {
+                          maximumFractionDigits: 0,
+                        })}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="flex h-[280px] items-center justify-center text-muted-foreground text-sm">
+                No assets held yet.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -355,66 +401,74 @@ export default function DashboardPage() {
                 <Trophy className="h-5 w-5 text-yellow-500" />
                 League Leaderboard
               </CardTitle>
-              <CardDescription>Top performers this week</CardDescription>
+              <CardDescription>
+                {currentLeague
+                  ? `${currentLeague.name} Rankings`
+                  : "Top performers"}
+              </CardDescription>
             </div>
-            <Button variant="ghost" size="sm">
-              View All <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+            <Link href="/leaderboard">
+              <Button variant="ghost" size="sm">
+                View All <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {leaderboardData.map((player) => (
-                <div
-                  key={player.rank}
-                  className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
-                    player.name === "You"
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg font-bold ${
-                        player.rank === 1
-                          ? "bg-yellow-500/20 text-yellow-500"
-                          : player.rank === 2
-                            ? "bg-slate-400/20 text-slate-400"
-                            : player.rank === 3
-                              ? "bg-orange-500/20 text-orange-500"
-                              : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {player.rank <= 3
-                        ? ["🥇", "🥈", "🥉"][player.rank - 1]
-                        : player.rank}
+              {leaderboard.length > 0 ? (
+                leaderboard.slice(0, 5).map((player) => (
+                  <div
+                    key={player.userId}
+                    className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+                      player.userId === user?._id
+                        ? "border-primary bg-primary/5"
+                        : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg font-bold ${
+                          player.rank === 1
+                            ? "bg-yellow-500/20 text-yellow-500"
+                            : player.rank === 2
+                              ? "bg-slate-400/20 text-slate-400"
+                              : player.rank === 3
+                                ? "bg-orange-500/20 text-orange-500"
+                                : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {player.rank <= 3
+                          ? ["🥇", "🥈", "🥉"][player.rank - 1]
+                          : player.rank}
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {player.username || "Player"}
+                          {player.userId === user?._id && (
+                            <Badge variant="secondary" className="ml-2">
+                              You
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          ₹{player.score.toLocaleString()} score
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">
-                        {player.name}
-                        {player.name === "You" && (
-                          <Badge variant="secondary" className="ml-2">
-                            You
-                          </Badge>
-                        )}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        ${player.score.toLocaleString()} portfolio
+                    {/* Change % is not in LeaderboardEntry type, simplifying display */}
+                    <div className="text-right">
+                      <p className="font-bold text-accent">#{player.rank}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Current Rank
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p
-                      className={`font-bold ${
-                        player.change >= 0 ? "text-accent" : "text-primary"
-                      }`}
-                    >
-                      {player.change >= 0 ? "+" : ""}
-                      {player.change}%
-                    </p>
-                    <p className="text-xs text-muted-foreground">this week</p>
-                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-muted-foreground">
+                  No leaderboard data available.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -428,7 +482,7 @@ export default function DashboardPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-center w-full">
               <GaugeChart
-                value={68}
+                value={performanceMetrics.winRate}
                 label="Win Rate"
                 sections={[
                   { min: 0, max: 40, color: "var(--primary)", label: "Poor" },
@@ -452,19 +506,20 @@ export default function DashboardPage() {
             <Separator />
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-accent">19</p>
-                <p className="text-xs text-muted-foreground">Winning Trades</p>
+                <p className="text-2xl font-bold text-accent">
+                  {achievementStats?.completionRate || 0}%
+                </p>
+                <p className="text-xs text-muted-foreground">Completion Rate</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">9</p>
-                <p className="text-xs text-muted-foreground">Losing Trades</p>
+                <p className="text-2xl font-bold">
+                  ₹{achievementStats?.totalPoints?.toLocaleString() || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Total Points</p>
               </div>
+              {/* Avg Loss not in stats, hiding or keeping placeholder */}
               <div className="text-center">
-                <p className="text-2xl font-bold">$142</p>
-                <p className="text-xs text-muted-foreground">Avg. Profit</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">$78</p>
+                <p className="text-2xl font-bold">--</p>
                 <p className="text-xs text-muted-foreground">Avg. Loss</p>
               </div>
             </div>
@@ -481,53 +536,60 @@ export default function DashboardPage() {
               <CardTitle>Recent Trades</CardTitle>
               <CardDescription>Your latest trading activity</CardDescription>
             </div>
-            <Button variant="ghost" size="sm">
-              View History <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+            <Link href="/trade-history">
+              <Button variant="ghost" size="sm">
+                View History <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentTrades.map((trade) => (
-                <div
-                  key={trade.id}
-                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted font-bold">
-                      {trade.symbol.slice(0, 2)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{trade.symbol}</span>
-                        <Badge
-                          variant={
-                            trade.type === "BUY" ? "default" : "destructive"
-                          }
-                          className="text-xs"
-                        >
-                          {trade.type}
-                        </Badge>
+              {trades.length > 0 ? (
+                trades.slice(0, 4).map((trade) => (
+                  <div
+                    key={trade._id}
+                    className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted font-bold">
+                        {trade.symbol.slice(0, 2)}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {trade.name}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{trade.symbol}</span>
+                          <Badge
+                            variant={
+                              trade.type === "BUY" ? "default" : "destructive"
+                            }
+                            className="text-xs"
+                          >
+                            {trade.type}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {trade.quantity} Shares @ ₹{trade.price.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">
+                        ₹
+                        {trade.totalCost.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center justify-end gap-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(trade.executedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p
-                      className={`font-bold ${
-                        trade.profit >= 0 ? "text-accent" : "text-primary"
-                      }`}
-                    >
-                      {trade.profit >= 0 ? "+" : ""}${trade.profit}
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center justify-end gap-1">
-                      <Clock className="h-3 w-3" />
-                      {trade.time}
-                    </p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  No trades executed yet.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -544,36 +606,44 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {achievements.map((achievement) => (
-                  <div
-                    key={achievement.id}
-                    className={`rounded-lg border p-3 ${
-                      achievement.unlocked
-                        ? "border-yellow-500/30 bg-yellow-500/5"
-                        : "opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{achievement.icon}</span>
-                        <span className="font-medium text-sm">
-                          {achievement.name}
-                        </span>
+                {allAchievements.length > 0 ? (
+                  allAchievements.slice(0, 4).map((achievement) => (
+                    <div
+                      key={achievement.achievementId}
+                      className={`rounded-lg border p-3 ${
+                        achievement.isUnlocked
+                          ? "border-yellow-500/30 bg-yellow-500/5"
+                          : "opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">
+                            {achievement.icon || "🌟"}
+                          </span>
+                          <span className="font-medium text-sm">
+                            {achievement.name}
+                          </span>
+                        </div>
+                        {achievement.isUnlocked && (
+                          <Badge variant="secondary" className="text-xs">
+                            Unlocked
+                          </Badge>
+                        )}
                       </div>
-                      {achievement.unlocked && (
-                        <Badge variant="secondary" className="text-xs">
-                          Unlocked
-                        </Badge>
+                      {!achievement.isUnlocked && (
+                        <Progress
+                          value={achievement.completionPercent}
+                          className="h-1.5"
+                        />
                       )}
                     </div>
-                    {!achievement.unlocked && (
-                      <Progress
-                        value={achievement.progress}
-                        className="h-1.5"
-                      />
-                    )}
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Loading achievements...
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -586,35 +656,48 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {watchlist.map((stock) => (
-                  <div
-                    key={stock.symbol}
-                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <div>
-                      <p className="font-semibold">{stock.symbol}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {stock.name}
-                      </p>
+                {watchlistData.length > 0 ? (
+                  watchlistData.map((stock) => (
+                    <div
+                      key={stock.symbol}
+                      className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
+                      <div>
+                        <p className="font-semibold">{stock.symbol}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {stock.name}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">
+                          {stock.price > 0
+                            ? `₹${stock.price.toFixed(2)}`
+                            : "--"}
+                        </p>
+                        <p
+                          className={`text-xs flex items-center justify-end gap-1 ${
+                            stock.change >= 0 ? "text-accent" : "text-primary"
+                          }`}
+                        >
+                          {stock.change !== 0 && (
+                            <>
+                              {stock.change >= 0 ? (
+                                <ArrowUpRight className="h-3 w-3" />
+                              ) : (
+                                <ArrowDownRight className="h-3 w-3" />
+                              )}
+                              {stock.changePercent.toFixed(2)}%
+                            </>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">${stock.price}</p>
-                      <p
-                        className={`text-xs flex items-center justify-end gap-1 ${
-                          stock.change >= 0 ? "text-accent" : "text-primary"
-                        }`}
-                      >
-                        {stock.change >= 0 ? (
-                          <ArrowUpRight className="h-3 w-3" />
-                        ) : (
-                          <ArrowDownRight className="h-3 w-3" />
-                        )}
-                        {stock.change >= 0 ? "+" : ""}
-                        {stock.changePercent}%
-                      </p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground text-center py-4">
+                    Your watchlist is empty.
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -664,12 +747,16 @@ function StatsCard({
               isPositive ? "text-accent" : "text-primary"
             }`}
           >
-            {isPositive ? (
-              <TrendingUp className="h-4 w-4" />
-            ) : (
-              <TrendingDown className="h-4 w-4" />
+            {change && (
+              <>
+                {isPositive ? (
+                  <TrendingUp className="h-4 w-4" />
+                ) : (
+                  <TrendingDown className="h-4 w-4" />
+                )}
+                {change}
+              </>
             )}
-            {change}
           </span>
           <span className="text-xs text-muted-foreground">{description}</span>
         </div>

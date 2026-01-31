@@ -170,9 +170,9 @@ function FloatingElement({
 const features = [
   {
     icon: LineChart,
-    title: "Real-Time Trading",
+    title: "Real-Time Market Simulation",
     description:
-      "Execute trades with live market data and watch your portfolio grow in real-time",
+      "Practice trading with live price simulations and realistic market conditions",
     color: "text-primary",
     gradient: "from-primary/20 to-primary/5",
   },
@@ -180,72 +180,72 @@ const features = [
     icon: Trophy,
     title: "Competitive Leagues",
     description:
-      "Compete in daily, weekly, and monthly leaderboards against traders worldwide",
+      "Join daily, weekly, and monthly trading leagues to compete with peers",
     color: "text-yellow-500",
     gradient: "from-yellow-500/20 to-yellow-500/5",
   },
   {
     icon: Target,
-    title: "Daily Challenges",
+    title: "Achievement System",
     description:
-      "Complete challenges to earn XP, unlock achievements, and climb the ranks",
+      "Earn XP points and unlock achievements as you progress in your trading journey",
     color: "text-green-500",
     gradient: "from-green-500/20 to-green-500/5",
   },
   {
     icon: GraduationCap,
-    title: "Learn Trading",
+    title: "Educational Focus",
     description:
-      "Master trading fundamentals with our comprehensive courses and tutorials",
+      "Learn trading fundamentals and build financial literacy in a safe environment",
     color: "text-blue-500",
     gradient: "from-blue-500/20 to-blue-500/5",
   },
   {
     icon: Users,
-    title: "Active Community",
+    title: "Portfolio Tracking",
     description:
-      "Share strategies, follow top traders, and learn from the community",
+      "Track your virtual portfolio performance with detailed analytics and insights",
     color: "text-purple-500",
     gradient: "from-purple-500/20 to-purple-500/5",
   },
   {
     icon: Shield,
-    title: "Risk-Free Practice",
+    title: "Risk-Free Learning",
     description:
-      "Trade with virtual currency - learn without risking real money",
+      "Practice with virtual currency - no real money, no financial risk",
     color: "text-cyan-500",
     gradient: "from-cyan-500/20 to-cyan-500/5",
   },
-];
+]
 
 // Achievements showcase
 const achievements = [
   {
     icon: Rocket,
     name: "First Trade",
-    description: "Complete your first trade",
+    description: "Execute your first trade",
     xp: 50,
     color: "text-blue-500",
   },
   {
     icon: Flame,
-    name: "Hot Streak",
-    description: "7-day trading streak",
+    name: "Day Trader",
+    description: "Complete 5 trades in one day",
     xp: 200,
     color: "text-orange-500",
   },
   {
     icon: Medal,
-    name: "Top 10",
-    description: "Reach top 10 on leaderboard",
-    xp: 500,
+    name: "Portfolio Manager",
+    description: "Diversify across 5 stocks",
+    xp: 250,
     color: "text-yellow-500",
   },
   {
     icon: Brain,
-    name: "Scholar",
-    description: "Complete all courses",
-    xp: 1000,
+    name: "Momentum Builder",
+    description: "Complete 10 total trades",
+    xp: 100,
     color: "text-purple-500",
   },
 ];
@@ -254,63 +254,63 @@ const achievements = [
 const platformFeatures = [
   {
     icon: BarChart3,
-    title: "Advanced Charts",
-    description: "Candlestick, line, area charts with technical indicators",
+    title: "Interactive Charts",
+    description: "Visualize price movements with historical data",
   },
   {
     icon: PieChart,
-    title: "Portfolio Analytics",
-    description: "Track performance, allocation, and risk metrics",
+    title: "Portfolio Dashboard",
+    description: "Monitor your holdings and track performance",
   },
   {
     icon: Award,
-    title: "50+ Achievements",
-    description: "Unlock badges and showcase your trading journey",
+    title: "Achievement Tracking",
+    description: "Unlock and display your trading milestones",
   },
   {
     icon: BookOpen,
-    title: "Learning Paths",
-    description: "Structured courses from beginner to advanced",
+    title: "Learn by Doing",
+    description: "Hands-on experience with simulated trading",
   },
   {
     icon: MessageSquare,
-    title: "Social Trading",
-    description: "Share ideas and follow successful traders",
+    title: "Real-Time Updates",
+    description: "Live price updates via WebSocket connections",
   },
   {
     icon: Settings,
-    title: "Customizable",
-    description: "Personalize your trading experience",
+    title: "Customizable Experience",
+    description: "Personalize your trading dashboard",
   },
 ];
 
 // Testimonials
 const testimonials = [
   {
-    name: "Alex Chen",
-    role: "Finance Student",
-    university: "MIT",
-    avatar: "A",
+    name: "CodeSprint Team",
+    role: "Hackathon Project",
+    university: "St Joseph's College",
+    avatar: "C",
     content:
-      "TradeQuest helped me understand market dynamics without risking real money. The gamification keeps me engaged!",
+      "Built in 48 hours, TradeQuest demonstrates how gamification can make financial education engaging and accessible to students.",
     rating: 5,
   },
   {
-    name: "Sarah Miller",
-    role: "Economics Major",
-    university: "Stanford",
-    avatar: "S",
+    name: "ByteMonks Team",
+    role: "Development Team",
+    university: "Hyderabad",
+    avatar: "B",
     content:
-      "The competitive aspect and achievements make learning trading actually fun. I have learned more here than in my classes!",
+      "Our goal was to create a platform where students can learn trading concepts without financial risk while competing with peers.",
     rating: 5,
   },
   {
-    name: "James Wilson",
-    role: "Business Student",
-    university: "Harvard",
-    avatar: "J",
+    name: "Project Vision",
+    role: "Educational Platform",
+    university: "For Students",
+    avatar: "P",
     content:
-      "Finally, a platform that combines education with real-world trading simulation. Highly recommended for students!",
+      "TradeQuest combines competitive gaming elements with practical financial education to help students build confidence in trading.",
     rating: 5,
   },
 ];
@@ -318,39 +318,39 @@ const testimonials = [
 // FAQ data
 const faqs = [
   {
-    question: "Is TradeQuest free to use?",
+    question: "What is TradeQuest?",
     answer:
-      "Yes! TradeQuest is completely free for students. Start with $100,000 in virtual currency and begin your trading journey.",
+      "TradeQuest is a gamified virtual trading platform built for the CodeSprint 2026 Hackathon. It helps students learn stock trading through competition and achievements, all without risking real money.",
   },
   {
     question: "Do I need trading experience?",
     answer:
-      "Not at all! Our Learn section has courses for complete beginners, and you can practice risk-free with virtual money.",
+      "Not at all! TradeQuest is designed for students at all levels. Start with $100,000 in virtual currency and learn through hands-on practice in a safe environment.",
   },
   {
-    question: "How does the XP system work?",
+    question: "How does the gamification work?",
     answer:
-      "Earn XP by completing trades, daily challenges, achievements, and learning courses. Level up to unlock new features and climb the leaderboard!",
+      "Earn XP points by executing trades, completing achievements, and participating in leagues. Level up your profile and compete on leaderboards to showcase your trading skills.",
   },
   {
-    question: "Is the market data real?",
+    question: "Is the trading data realistic?",
     answer:
-      "Yes, we use real-time market data so you can learn with actual price movements and market conditions.",
+      "The platform uses simulated market data with realistic price movements. While not real-time market feeds, it provides a practical learning experience for understanding trading dynamics.",
   },
 ];
 
 // Stats data
 const stats = [
-  { value: 50000, suffix: "+", label: "Active Traders", icon: Users },
+  { value: 12, suffix: "", label: "Stock Symbols", icon: BarChart3 },
   {
-    value: 10,
+    value: 100,
     prefix: "$",
-    suffix: "M+",
-    label: "Virtual Volume",
+    suffix: "K",
+    label: "Starting Capital",
     icon: TrendingUp,
   },
-  { value: 500, suffix: "+", label: "Universities", icon: GraduationCap },
-  { value: 100000, suffix: "+", label: "Trades Daily", icon: BarChart3 },
+  { value: 4, suffix: "+", label: "Achievements", icon: Trophy },
+  { value: 3, suffix: "", label: "League Types", icon: Users },
 ];
 
 // How it works steps
@@ -359,22 +359,22 @@ const howItWorksSteps = [
     step: "01",
     title: "Create Account",
     description:
-      "Sign up for free and get $100,000 in virtual currency to start trading",
+      "Sign up and receive $100,000 in virtual currency to begin your trading journey",
     icon: Users,
     color: "from-blue-500 to-cyan-500",
   },
   {
     step: "02",
-    title: "Learn & Practice",
+    title: "Build Portfolio",
     description:
-      "Complete courses, practice with virtual trades, and build your strategy",
+      "Trade stocks, track your portfolio, and learn market strategies risk-free",
     icon: BookOpen,
     color: "from-purple-500 to-pink-500",
   },
   {
     step: "03",
-    title: "Compete & Win",
-    description: "Join competitions, climb leaderboards, and earn achievements",
+    title: "Compete & Grow",
+    description: "Join leagues, earn achievements, and level up your trading skills",
     icon: Trophy,
     color: "from-orange-500 to-red-500",
   },
@@ -382,9 +382,9 @@ const howItWorksSteps = [
 
 // Dashboard preview stats
 const dashboardStats = [
-  { label: "Portfolio", value: "$127,450", change: "+12.4%" },
-  { label: "Today P/L", value: "+$2,340", change: "+1.8%" },
-  { label: "XP Points", value: "4,250", change: "Level 15" },
+  { label: "Portfolio", value: "$100,000", change: "Start" },
+  { label: "Holdings", value: "0", change: "Begin" },
+  { label: "XP Points", value: "0", change: "Level 1" },
 ];
 
 // Chart bar heights
@@ -479,7 +479,7 @@ export default function Page() {
                   href="#testimonials"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Testimonials
+                  About
                 </a>
                 <a
                   href="#faq"
@@ -558,7 +558,7 @@ export default function Page() {
                     className="block py-2 text-muted-foreground hover:text-foreground"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Testimonials
+                    About
                   </a>
                   <a
                     href="#faq"
@@ -633,7 +633,7 @@ export default function Page() {
                   className="px-4 py-1.5 text-sm font-medium gap-2 bg-primary/5 border-primary/20"
                 >
                   <Sparkles className="w-4 h-4 text-primary" />
-                  The #1 Gamified Trading Platform for Students
+                  CodeSprint 2026 Hackathon Project
                 </Badge>
               </motion.div>
 
@@ -641,9 +641,9 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight"
               >
-                <span className="block">Master Trading.</span>
+                <span className="block">Learn Trading.</span>
                 <span className="block mt-2 bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  Level Up Your Skills.
+                  Compete. Level Up.
                 </span>
               </motion.h1>
 
@@ -651,9 +651,8 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto"
               >
-                Compete in a gamified trading league, earn XP and achievements,
-                climb the leaderboard, and learn real trading strategies — all
-                without risking real money.
+                A gamified virtual trading platform where students can practice stock trading,
+                compete in leagues, earn achievements, and build financial literacy — all without risking real money.
               </motion.p>
 
               <motion.div
@@ -674,34 +673,22 @@ export default function Page() {
                     </Button>
                   </motion.div>
                 </Link>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-lg px-8 py-6 gap-2 rounded-xl"
-                  >
-                    <Play className="w-5 h-5" />
-                    Watch Demo
-                  </Button>
-                </motion.div>
+                
               </motion.div>
 
               <motion.div variants={fadeIn} className="pt-8">
                 <div className="flex flex-wrap justify-center items-center gap-6 text-muted-foreground text-sm">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>100% Free</span>
+                    <span>Virtual Currency</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>Real Market Data</span>
+                    <span>Real Learning</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>No Credit Card Required</span>
+                    <span>No Risk</span>
                   </div>
                 </div>
               </motion.div>
@@ -775,15 +762,15 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
               >
-                Everything You Need to
-                <span className="text-primary"> Master Trading</span>
+                Built for
+                <span className="text-primary"> Student Success</span>
               </motion.h2>
               <motion.p
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground max-w-2xl mx-auto"
               >
-                From real-time trading to gamified learning, TradeQuest has all
-                the tools you need to become a confident trader.
+                TradeQuest combines gamification with practical trading education
+                to help students learn financial concepts through hands-on experience.
               </motion.p>
             </motion.div>
 
@@ -833,8 +820,8 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
               >
-                Start Trading in{" "}
-                <span className="text-primary">3 Simple Steps</span>
+                Get Started in{" "}
+                <span className="text-primary">3 Easy Steps</span>
               </motion.h2>
             </motion.div>
 
@@ -885,12 +872,12 @@ export default function Page() {
                   Platform
                 </Badge>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Powerful Tools for{" "}
-                  <span className="text-primary">Every Trader</span>
+                  Comprehensive Tools for{" "}
+                  <span className="text-primary">Learning & Growth</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8">
-                  Our platform is packed with features designed to help you
-                  learn, practice, and compete effectively.
+                  Built with modern web technologies to provide a seamless
+                  trading simulation experience for students.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {platformFeatures.map((feature, index) => (
@@ -985,16 +972,15 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
               >
-                Earn Achievements,{" "}
-                <span className="text-primary">Level Up</span>
+                Unlock Achievements,{" "}
+                <span className="text-primary">Track Progress</span>
               </motion.h2>
               <motion.p
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground max-w-2xl mx-auto"
               >
-                With 50+ achievements to unlock, there is always a new milestone
-                to reach. Earn XP, climb the ranks, and showcase your trading
-                prowess.
+                Earn XP points and unlock achievements as you complete trades,
+                diversify your portfolio, and reach new milestones in your trading journey.
               </motion.p>
             </motion.div>
 
@@ -1037,7 +1023,7 @@ export default function Page() {
             >
               <Link href="/auth?view=signup">
                 <Button size="lg" variant="outline" className="gap-2">
-                  View All 50+ Achievements
+                  Explore Achievement System
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -1056,15 +1042,15 @@ export default function Page() {
             >
               <motion.div variants={fadeInUp}>
                 <Badge variant="outline" className="mb-4">
-                  Testimonials
+                  About the Project
                 </Badge>
               </motion.div>
               <motion.h2
                 variants={fadeInUp}
                 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
               >
-                Loved by{" "}
-                <span className="text-primary">Students Worldwide</span>
+                Built by{" "}
+                <span className="text-primary">ByteMonks Team</span>
               </motion.h2>
             </motion.div>
 
@@ -1100,7 +1086,7 @@ export default function Page() {
                           {testimonials[activeTestimonial].name}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {testimonials[activeTestimonial].role} at{" "}
+                          {testimonials[activeTestimonial].role} •{" "}
                           {testimonials[activeTestimonial].university}
                         </div>
                       </div>
@@ -1140,7 +1126,7 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
               >
-                Frequently Asked <span className="text-primary">Questions</span>
+                Common <span className="text-primary">Questions</span>
               </motion.h2>
             </motion.div>
 
@@ -1186,17 +1172,17 @@ export default function Page() {
                 variants={fadeInUp}
                 className="text-4xl md:text-5xl lg:text-6xl font-bold"
               >
-                Ready to Start Your
+                Start Learning
                 <span className="block text-primary mt-2">
-                  Trading Journey?
+                  Trading Today
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeInUp}
                 className="text-xl text-muted-foreground max-w-2xl mx-auto"
               >
-                Join thousands of students already mastering the markets. Sign
-                up now and get $100,000 in virtual currency to start trading!
+                Create your account and begin your journey into the world of stock trading
+                with $100,000 in virtual capital. No risk, all learning.
               </motion.p>
               <motion.div
                 variants={fadeInUp}
@@ -1238,15 +1224,15 @@ export default function Page() {
               >
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4" />
-                  <span>Available Worldwide</span>
+                  <span>Open Source Project</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  <span>24/7 Market Access</span>
+                  <span>Built for Students</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  <span>100% Safe & Secure</span>
+                  <span>Safe Learning Environment</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -1272,8 +1258,8 @@ export default function Page() {
                   <span className="text-xl font-bold">TradeQuest</span>
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  The gamified trading platform designed for students to learn
-                  and compete.
+                  A CodeSprint 2026 hackathon project by ByteMonks team.
+                  Building financial literacy through gamification.
                 </p>
               </div>
 
@@ -1316,22 +1302,22 @@ export default function Page() {
               </div>
 
               <div>
-                <h4 className="font-semibold mb-4">Resources</h4>
+                <h4 className="font-semibold mb-4">Project</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li>
                     <a
-                      href="#"
+                      href="https://github.com/whyismeleige/trade-quest"
                       className="hover:text-foreground transition-colors"
                     >
-                      Documentation
+                      GitHub Repository
                     </a>
                   </li>
                   <li>
                     <a
-                      href="#"
+                      href="#testimonials"
                       className="hover:text-foreground transition-colors"
                     >
-                      Learn Trading
+                      About Team
                     </a>
                   </li>
                   <li>
@@ -1344,49 +1330,29 @@ export default function Page() {
                   </li>
                   <li>
                     <a
-                      href="#"
+                      href="https://github.com/whyismeleige/trade-quest#readme"
                       className="hover:text-foreground transition-colors"
                     >
-                      Blog
+                      Documentation
                     </a>
                   </li>
                 </ul>
               </div>
 
               <div>
-                <h4 className="font-semibold mb-4">Company</h4>
+                <h4 className="font-semibold mb-4">Info</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li>
-                    <a
-                      href="#"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      About
-                    </a>
+                    <span className="text-foreground">Team:</span> ByteMonks
                   </li>
                   <li>
-                    <a
-                      href="#"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      Contact
-                    </a>
+                    <span className="text-foreground">College:</span> St Joseph's
                   </li>
                   <li>
-                    <a
-                      href="#"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      Privacy Policy
-                    </a>
+                    <span className="text-foreground">Event:</span> CodeSprint 2026
                   </li>
                   <li>
-                    <a
-                      href="#"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      Terms of Service
-                    </a>
+                    <span className="text-foreground">Theme:</span> Stock Market & FinTech
                   </li>
                 </ul>
               </div>
@@ -1394,7 +1360,7 @@ export default function Page() {
 
             <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-sm text-muted-foreground">
-                &copy; 2026 TradeQuest. All rights reserved.
+                &copy; 2026 TradeQuest - ByteMonks Team. Built for CodeSprint Hackathon.
               </p>
               <div className="flex items-center gap-4">
                 <a
